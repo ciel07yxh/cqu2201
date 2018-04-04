@@ -1,0 +1,1 @@
+该目录是按照IAR，主要实现C/C++语言的runtime运行库与硬件的接口。 这些函数有runtime DLib调用。
