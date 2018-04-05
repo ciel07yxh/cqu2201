@@ -57,7 +57,7 @@ PROCESS_THREAD(led_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
     sys_led_toggle(0);
     sys_led_toggle(1);
-   // PRINTF("The LED is toggle!\r\n");
+    PRINTF("The moteid is %d \r\n",get_moteid());
   }
    PROCESS_END();
 }
@@ -92,7 +92,7 @@ int main (void)
 
     // 初始化控制台
     uart_stdio_init(115200);
-
+    moteid_init();
 
     PRINTF("The Contiki System Start!\r\n");
 

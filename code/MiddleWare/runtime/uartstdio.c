@@ -93,6 +93,10 @@ static void uart_stdio_isr(void)
    {
       c = (unsigned char)(HWREG32(UART_STDIO_BASE + USART_O_DR) & 0x01FF);
       serial_line_input_byte(c);
+     //如果接受到了从笔记本电脑发送的 0x4c 代表需要进入Bootloader 下载固件 （重启进入BootLoader）
+       if(0x4c==c){
+        hal_cpu_reset();
+      }
    }
    
    if(HWREG32(UART_STDIO_BASE + USART_O_SR) & 0x0008)             //  如果是数据过载了

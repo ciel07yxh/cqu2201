@@ -32,11 +32,11 @@
                 </option>
                 <option>
                     <name>Input description</name>
-                    <state>No specifier n, no float nor long long, no scan set, no assignment suppressing.</state>
+                    <state>No specifier n, no float nor long long, no scan set, no assignment suppressing, without multibyte support.</state>
                 </option>
                 <option>
                     <name>Output description</name>
-                    <state>No specifier a, A, no specifier n, no float nor long long.</state>
+                    <state>No specifier a, A, no specifier n, no float nor long long, without multibyte support.</state>
                 </option>
                 <option>
                     <name>GOutputBinary</name>
@@ -66,7 +66,7 @@
                 </option>
                 <option>
                     <name>OGLastSavedByProductVersion</name>
-                    <state>8.11.1.13270</state>
+                    <state>8.10.1.12859</state>
                 </option>
                 <option>
                     <name>GeneralEnableMisra</name>
@@ -78,7 +78,7 @@
                 </option>
                 <option>
                     <name>OGChipSelectEditMenu</name>
-                    <state>STM32F103ZC	ST STM32F103ZC</state>
+                    <state>STM32F103RC	ST STM32F103RC</state>
                 </option>
                 <option>
                     <name>GenLowLevelInterface</name>
@@ -116,7 +116,7 @@
                 </option>
                 <option>
                     <name>GBECoreSlave</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>38</state>
                 </option>
                 <option>
@@ -133,12 +133,12 @@
                 </option>
                 <option>
                     <name>CoreVariant</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>38</state>
                 </option>
                 <option>
                     <name>GFPUDeviceSlave</name>
-                    <state>STM32F103ZC	ST STM32F103ZC</state>
+                    <state>STM32F103RC	ST STM32F103RC</state>
                 </option>
                 <option>
                     <name>FPU2</name>
@@ -156,7 +156,7 @@
                 </option>
                 <option>
                     <name>GFPUCoreSlave2</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>38</state>
                 </option>
                 <option>
@@ -1136,7 +1136,7 @@
                 </option>
                 <option>
                     <name>GBECoreSlave</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>1</state>
                 </option>
                 <option>
@@ -1153,7 +1153,7 @@
                 </option>
                 <option>
                     <name>CoreVariant</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>0</state>
                 </option>
                 <option>
@@ -1176,7 +1176,7 @@
                 </option>
                 <option>
                     <name>GFPUCoreSlave2</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>0</state>
                 </option>
                 <option>
@@ -2947,6 +2947,9 @@
         </file>
         <file>
             <name>$PROJ_DIR$\User\Main.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\moteid.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\User\test_shell.c</name>
