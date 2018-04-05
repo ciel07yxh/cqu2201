@@ -28,7 +28,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "runtime/uartstdio.h"
 #include "infra/rhb_type.h"
 
 /*********************************************************************************************************

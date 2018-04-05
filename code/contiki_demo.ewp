@@ -2952,6 +2952,9 @@
             <name>$PROJ_DIR$\User\moteid.c</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\User\moteid.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\User\test_shell.c</name>
             <excluded>
                 <configuration>Debug</configuration>
@@ -2962,6 +2965,12 @@
         </file>
         <file>
             <name>$PROJ_DIR$\User\udp-server.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\userinit.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\userinit.h</name>
         </file>
     </group>
 </project>

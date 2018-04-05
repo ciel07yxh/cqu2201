@@ -91,7 +91,9 @@ static void spi_bus_init(struct rhb_spi_bus *bus)
 *********************************************************************************************************/
 static void spi_bus_lock(struct rhb_spi_bus *bus)
 {
-    bus->int_state = hal_enter_critical(1);
+    uart_printf("lock\r\n");
+    //bus->int_state = hal_enter_critical(1);
+    
 }
 
 /*********************************************************************************************************
@@ -103,7 +105,8 @@ static void spi_bus_lock(struct rhb_spi_bus *bus)
 *********************************************************************************************************/
 static void spi_bus_unlock(struct rhb_spi_bus *bus)
 {
-   hal_exit_critical(bus->int_state);
+  uart_printf("unlock\r\n");
+   //hal_exit_critical(bus->int_state);
 }
 /*********************************************************************************************************
 ** Function name:       spi_bus_send_recv_byte
