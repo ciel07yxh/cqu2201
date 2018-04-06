@@ -42,7 +42,7 @@
 #define RTIMER_ARCH_USE_BASE  TIM2_BASE   // 使用TIM1作为rtimer定时器
 #define RTIMER_INT_NO         INT_TIM2    // 中断编号
 #define RT_PRESCALER          639        // 定时器的预分频值，PCLK1/4096 = 32M / (639 + 1) = 50000 Hz
-#define RTIMER_ARCH_SECOND    50000        // One tick: 20 us. 
+#define RTIMER_ARCH_SECOND    100000        // One tick: 20 us. 
 
 void rtimer_arch_set(rtimer_clock_t t);
 
