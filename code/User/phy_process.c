@@ -124,7 +124,7 @@ void packet_input_arch(void){
       uart_printf("\r\n");
     
 #endif 
-    
+    macfct *macpara = &mac;
     if(packetbuf_datalen()==sizeof(PhyRadioMsg))
     {
       PhyRadioMsg *recmeg =(PhyRadioMsg *)packetbuf_dataptr();
@@ -134,16 +134,21 @@ void packet_input_arch(void){
       case FRAME_TYPE_TIME_SYNCH:
        if(mac.IsSyched)
         break;
-        macfct *macpara = &mac;
+        
         macpara->IsSyched = true;
         //计算时间偏置
         macpara->timeoffset(macpara,recmeg->time_stamp);
         PRINTF("time-offset is %d the time is  %d \r\n",mac.time_offset,macpara->get_synch_time(macpara));
-        
-        
+        void *ptr=NULL;
+        tdmasend(ptr);      
         break;
-      
+        
+      case FRAME_TYPE_BSM:
+        uart_printf("receive bsm from %d time %d \r\n",recmeg->moteid,macpara->get_synch_time(macpara));
+        break;
       }
+      
+     
     }
     
  
@@ -246,3 +251,36 @@ PROCESS_THREAD(time_synch_process, ev, data)
  
    PROCESS_END();
 }
+
+/*********************************************************************************************************
+** Function name:       tdmasend
+** Descriptions:        在规定的时间间隔内进行TDMA帧发送
+** input parameters:    0
+** output parameters:   无
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-04-07
+*********************************************************************************************************/
+
+void tdmasend(void *ptr){
+   uint32_t now, temp;
+   static struct rtimer rt2;
+   int r;
+   macfct *macpara = &mac;
+   
+   frame_init(&frame,FRAME_TYPE_BSM);
+   NETSTACK_RADIO.send(&frame,sizeof(PhyRadioMsg));
+   
+   now =macpara->get_synch_time(macpara);
+   
+   temp = PEROID_LENGTH-(now%PEROID_LENGTH)+(get_moteid()%10)*SLOT_LENGTH;
+   r=rtimer_set(&rt2, (rtimer_clock_t)(now+temp+GUARD_PERIOD),1,(rtimer_callback_t)tdmasend,NULL);
+   
+   
+   if(r){
+      uart_printf("rtimer error\r\n");
+    }
+
+   //uart_printf("tdma send %d %d\r\n",moteid,time_synch_rec((uint8_t *)send_buff));
+}
+

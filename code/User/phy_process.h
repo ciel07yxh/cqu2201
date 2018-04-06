@@ -9,6 +9,15 @@
 #define FRAME_TYPE_WARN_ACK     0x0003
 #define FRAME_TYPE_WARN         0x0004//簇间通信类型
 
+
+
+
+#define SLOT_LENGTH (1000)//假设簇内10个节点,periodlength 
+#define PEROID_LENGTH (10000)
+#define GUARD_PERIOD 100
+
+
+
 void packet_input_arch(void);
 
 typedef struct PhyRadioMsg {
@@ -36,4 +45,5 @@ uint16_t get_cluster_name(uint16_t moteid);
 void frame_init(PhyRadioMsg * msg,uint16_t frametype);   
 rtimer_clock_t get_synch_time();
 void timeoffset_calc(macfct *macpara,uint32_t time);
+void tdmasend(void *ptr);
 #endif
