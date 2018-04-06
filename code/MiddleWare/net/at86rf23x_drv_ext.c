@@ -27,7 +27,7 @@
 #include "contiki-net.h"
 #include "contiki-conf.h"
 #include "services/sys_services.h"
-#include "globalmacro.h"
+#include "includes.h"
 /*********************************************************************************************************
 ** 是否使能调试功能
 *********************************************************************************************************/
@@ -42,9 +42,7 @@
 /*********************************************************************************************************
 ** 是否使能自定义线程接收数据
 *********************************************************************************************************/
-#if RECIVE_SELF
-PROCESS_NAME(phy_receive_process);
-#endif
+
 /*********************************************************************************************************
   用到的宏函数定义
 *********************************************************************************************************/
@@ -417,10 +415,15 @@ static uint8 trx_frame_read(uint8 *frame, uint8 *lqi)
        RIMESTATS_ADD(toolong);
        return 0;
     }
-    
+    //读取第一个字节
+    *frame = ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, 0xFF);
+    //如果第一个字节 是帧长度 则重新读取
+    if( *frame == u8Rtn)
+      *frame=ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, 0xFF);
+    *frame++;
     // 读取帧内容
     u8Rtn -= 2;
-    for(i=0; i<u8Rtn; i++) 
+    for(i=0; i<u8Rtn-1; i++) 
     {
         *frame++ = ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, 0xFF);
     }
@@ -560,7 +563,8 @@ static int init(void)
     /* Force transition to TRX_OFF */
    trx_state_set(STATE_FORCE_TRX_OFF);
    BUSYWAIT_UNTIL(0, RTIMER_SECOND * TIME_PLL_ON_TO_TRX_OFF / 1000000);
-   
+   uint8_t ieee_addr_64[8]={0,0,0,0,0,0,0,1};
+   //ieee_set_pan_addr(0x1420,0x0203,ieee_addr_64);
     /*
     ** Step 4, 读射频芯片ID
     */
@@ -598,8 +602,8 @@ static int init(void)
     /*
     ** Step 6, 扩展工作模式配置
     */  
-    trx_bit_write(SR_MAX_FRAME_RETRIES, 3);
-    trx_bit_write(SR_MAX_CSMA_RETRIES, 5);
+    trx_bit_write(SR_MAX_FRAME_RETRIES, 0);
+    trx_bit_write(SR_MAX_CSMA_RETRIES, 1);
     temp = trx_rand_get();
     trx_bit_write(SR_CSMA_SEED_1, ((temp >> 8) & 0x07));
     trx_reg_write(RG_CSMA_SEED_0, (temp & 0xff));
@@ -654,7 +658,7 @@ static int init(void)
     **  0xE --------->-12db            0xE --------->-12db
     **  0xF --------->-17db            0xF --------->-17db
     */
-     trx_bit_write(SR_TX_PWR, 0x0);
+     trx_bit_write(SR_TX_PWR, 0x6);
      PRINTF("The RF transmit power is setting with register value %d!\r\n", trx_bit_read(SR_TX_PWR));
    
     /*
@@ -1064,6 +1068,12 @@ static void at86rf231_isr(void)
 {
    RF_IRQ_CLEAR();
    process_poll(&at86rf231_process);
+#if TIME_STAMP
+   macfct *macpara = &mac;
+   //如果没有时间同步，则记录中断的时间
+   if(!macpara->IsSyched)
+      macpara->time_stamp = RTIMER_NOW();
+#endif  
 }
 
 /*********************************************************************************************************
@@ -1099,11 +1109,8 @@ PROCESS_THREAD(at86rf231_process, ev, data)
                   len = read(packetbuf_dataptr(), PACKETBUF_SIZE);
                   if(len > 0) {
                       packetbuf_set_datalen(len);
-#if RECIVE_SELF 
-                      process_poll(&phy_receive_process);
-#else
                       NETSTACK_RDC.input();
-#endif 
+
                       sys_led_toggle(1); //绿灯
                       
                   }

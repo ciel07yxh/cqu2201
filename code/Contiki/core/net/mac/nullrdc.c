@@ -44,8 +44,10 @@
 #include "net/queuebuf.h"
 #include "net/netstack.h"
 #include "net/rime/rimestats.h"
+#include "runtime/uartstdio.h"
 #include <string.h>
-
+#include "globalmacro.h"
+#include "phy_process.h"
 #if CONTIKI_TARGET_COOJA
 #include "lib/simEnvChange.h"
 #endif /* CONTIKI_TARGET_COOJA */
@@ -356,12 +358,19 @@ init(void)
   on();
 }
 /*---------------------------------------------------------------------------*/
+
+
+
 const struct rdc_driver nullrdc_driver = {
   "nullrdc",
   init,
   send_packet,
   send_list,
+#if RECIVE_SELF
+  packet_input_arch,
+#else
   packet_input,
+#endif
   on,
   off,
   channel_check_interval,

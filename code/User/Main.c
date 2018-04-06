@@ -42,6 +42,10 @@ PROCESS_NAME(phy_receive_process);
 #ifdef RECIVE_SELF 
 PROCESS_NAME(phy_send_process);
 #endif
+
+#if  TIME_STAMP 
+  PROCESS_NAME(time_synch_process);
+#endif
 /*********************************************************************************************************
 **  内部函数声明
 *********************************************************************************************************/
@@ -71,6 +75,9 @@ PROCESS_THREAD(led_process, ev, data)
 AUTOSTART_PROCESSES(
 #if RECIVE_SELF 
   &phy_receive_process,
+#endif
+#if  TIME_STAMP 
+  &time_synch_process,
 #endif
    &phy_send_process);
 
@@ -113,7 +120,9 @@ int main (void)
     process_start(&etimer_process, NULL);
     ctimer_init();
     //TODO:判断需要初始化哪些物理层功能
-    contiki_net_init();  
+    //contiki_net_init();  
+    NETSTACK_RADIO.init();
+    NETSTACK_RDC.init();
     energest_init();
     ENERGEST_ON(ENERGEST_TYPE_CPU);
 
