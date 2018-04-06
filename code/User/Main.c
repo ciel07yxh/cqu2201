@@ -23,11 +23,11 @@
 **
 *********************************************************************************************************/
 #include "includes.h"
-
+#include "globalmacro.h"
 /*********************************************************************************************************
 **  全局变量定义
 *********************************************************************************************************/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include "runtime/uartstdio.h"
 #define PRINTF(...)   uart_printf(__VA_ARGS__)
@@ -38,8 +38,10 @@
 /*********************************************************************************************************
 **  外部函数声明
 *********************************************************************************************************/
-PROCESS_NAME(udp_client_process);
-
+PROCESS_NAME(phy_receive_process);
+#ifdef RECIVE_SELF 
+PROCESS_NAME(phy_send_process);
+#endif
 /*********************************************************************************************************
 **  内部函数声明
 *********************************************************************************************************/
@@ -55,17 +57,22 @@ PROCESS_THREAD(led_process, ev, data)
 
     etimer_set(&et, CLOCK_SECOND);
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-    sys_led_toggle(0);
-    sys_led_toggle(1);
-    PRINTF("The moteid is %d \r\n",get_moteid());
+
+    //PRINTF("The moteid is %d \r\n",get_moteid());
   }
    PROCESS_END();
 }
 
+
 /*********************************************************************************************************
 **  自启动的线程
 *********************************************************************************************************/
-AUTOSTART_PROCESSES(&led_process);
+
+AUTOSTART_PROCESSES(
+#if RECIVE_SELF 
+  &phy_receive_process,
+#endif
+   &phy_send_process);
 
 /*********************************************************************************************************
 **  操作系统需要的定义
@@ -105,16 +112,14 @@ int main (void)
     procinit_init();
     process_start(&etimer_process, NULL);
     ctimer_init();
-    // 初始化网络协议栈
-    contiki_net_init();
-
+    //TODO:判断需要初始化哪些物理层功能
+    contiki_net_init();  
     energest_init();
     ENERGEST_ON(ENERGEST_TYPE_CPU);
 
     autostart_start(autostart_processes);
    // watchdog_init();
    // watchdog_start();
-    process_start(&udp_client_process, NULL);
     for(;;)
     {
         do

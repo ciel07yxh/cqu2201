@@ -26,9 +26,8 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "contiki-conf.h"
-
 #include "services/sys_services.h"
-
+#include "globalmacro.h"
 /*********************************************************************************************************
 ** 是否使能调试功能
 *********************************************************************************************************/
@@ -36,12 +35,16 @@
 #if DEBUG
 #include "runtime/uartstdio.h"
 #include <stdio.h>
-//#define PRINTF(...)   uart_printf(__VA_ARGS__)
-#define PRINTF(...)     printf(__VA_ARGS__)
+#define PRINTF(...)   uart_printf(__VA_ARGS__)  //必须使用uart_printf（）函数
 #else
 #define PRINTF(...)
 #endif
-
+/*********************************************************************************************************
+** 是否使能自定义线程接收数据
+*********************************************************************************************************/
+#if RECIVE_SELF
+PROCESS_NAME(phy_receive_process);
+#endif
 /*********************************************************************************************************
   用到的宏函数定义
 *********************************************************************************************************/
@@ -537,7 +540,7 @@ static int init(void)
    RF_SPI_SEL_H();
 
    // 初始化中断引脚
-   GPIOConfigSet(RF_IRQ_BASE, RF_IRQ_PIN, GPIO_DIR_IN_Floating); \
+   GPIOConfigSet(RF_IRQ_BASE, RF_IRQ_PIN, GPIO_DIR_IN_Floating);
    AFIOExtiLineConfig(RF_IRQ_LINE_PORT, RF_IRQ_LINE_NO);
    ExtiIntEventClear(RF_IRQ_LINE_NO);
    ExtiIntEventFallingDisable(RF_IRQ_LINE_NO);
@@ -819,7 +822,7 @@ static int send(const void *payload, unsigned short payload_len)
 {
   uint8 enSendState;
   tAt86RFInfo *ptRFInfo = (tAt86RFInfo *)&__GtAt86RF231_Drv;
-   
+  sys_led_toggle(0);    //红灯
    
   /* If radio is off (slptr high), turn it on */
   if(ptRFInfo->dev_slp_tr_state()) {
@@ -1084,8 +1087,7 @@ PROCESS_THREAD(at86rf231_process, ev, data)
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
 
     PRINTF("at86rf231_process: calling receiver callback\n");
-    
-    //do {
+   
         u8IntStatus = trx_reg_read(RG_IRQ_STATUS);
         if(u8IntStatus & IRQ_TRX_END) { 
               u8Status = trx_state_get();
@@ -1097,36 +1099,20 @@ PROCESS_THREAD(at86rf231_process, ev, data)
                   len = read(packetbuf_dataptr(), PACKETBUF_SIZE);
                   if(len > 0) {
                       packetbuf_set_datalen(len);
+#if RECIVE_SELF 
+                      process_poll(&phy_receive_process);
+#else
                       NETSTACK_RDC.input();
+#endif 
+                      sys_led_toggle(1); //绿灯
+                      
                   }
                    bIsReceive = 0;
-               }  else {
-                 // 处理发送中断
-    //             enSendState = trx_bit_read(SR_TRAC_STATUS);
-    //             if(radio_receive_on ==  1) {
-    //              // make to rx on state.
-    //                trx_state_set(STATE_RX_AACK_ON);
-    //                rf_wait_idle();
-    //             } else {
-    //                rf_reset_state_machine();
-    //             }
-    //  
-    //            // 检查发送结果
-    //              if (enSendState == 1) {                //success, data pending from addressee
-    //                enSendState = RADIO_TX_OK;           //handle as ordinary success
-    //             }
-    //
-    //             if (enSendState == 3) {        //CSMA channel access failure
-    //               enSendState = RADIO_TX_COLLISION;
-    //             } else if (enSendState == 5) {        //Expected ACK, none received
-    //               enSendState = RADIO_TX_NOACK;
-    //             } else if (enSendState == 7) {        //Invalid (Can't happen since waited for idle above?)
-    //               enSendState = RADIO_TX_ERR;
-    //             } 
                }
         }
-   // } while(RF_IRQ_STATE());
   }
+
+
 
   PROCESS_END();
 }
