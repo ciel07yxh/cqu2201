@@ -4,14 +4,14 @@
 **
 **
 **--------------File Info---------------------------------------------------------------------------------
-** File Name:               moteid.h
-** Last modified Date:      2018-04-04
+** File Name:               radio_para.c
+** Last modified Date:      2018-04-07
 ** Last Version:            v1.0
-** Description:             moteid 读取
+** Description:             根据节点号初始化物理层参数
 ** 
 **--------------------------------------------------------------------------------------------------------
 ** Created By:              张校源
-** Created date:            2018-04-04
+** Created date:            2018-04-07
 ** Version:                 v1.0
 ** Descriptions:            The original version 初始版本
 **
@@ -22,26 +22,36 @@
 ** Description:             
 **
 *********************************************************************************************************/
-#ifndef __MOTEID_H__ 
-#define __MOTEID_H__ 
-
-#include "includes.h"
+#include "radio_para.h"
+#include "globalmacro.h"
+/*********************************************************************************************************
+  全局变量定义
+*********************************************************************************************************/
+radio_para radiopara;
 
 /*********************************************************************************************************
-  设备类型相关定义
+** Function name:       radio_para_init
+** Descriptions:        物理层参数初始化
+** input parameters:    0
+** output parameters:   无
+** Returned value:      moteid
+** Created by:          张校源
+** Created Date:        2018-04-07
 *********************************************************************************************************/
-#define MOTE_ID_FLASH_ADDR 0x08004000
+//TODO 根据节点号设置不同的功率
 
+void radio_para_init(){
+    radiopara.shortaddr = get_moteid();
+    radiopara.pan_id = get_cluster_name(radiopara.shortaddr);
+    radiopara.max_frame_retrise = DEFAULT_MAX_FRAME_RETRIES;
+    radiopara.max_csma_retries = 0x03;
+    radiopara.tx_power = 0x0E;
+    radiopara.channel = DEFAULT_CHANNEL;
+    radiopara.pancooder =DEEFAULT_COODER;
+    if(get_moteid() == TIME_SYNCH_NODE )
+      radiopara.tx_power = 0x02;
+}
 
-/*********************************************************************************************************
-  外部函数及变量定义
-*********************************************************************************************************/
-extern uint16_t moteid;
-void moteid_init(void);
-uint16_t get_moteid(void);
-uint16_t get_cluster_name(uint16_t moteid);
-
-#endif
 /*********************************************************************************************************
   END FILE 
 *********************************************************************************************************/

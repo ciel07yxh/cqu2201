@@ -53,6 +53,8 @@ macfct mac={
 timeoffset_calc,
 get_synch_time
 };
+
+static struct rtimer rt2;
 /*********************************************************************************************************
 **  内部函数声明
 *********************************************************************************************************/
@@ -125,25 +127,33 @@ void packet_input_arch(void){
     
 #endif 
     macfct *macpara = &mac;
+    radio_para *radio = (radio_para *)&radiopara;
+    //PhyRadioMsg *recmeg =(PhyRadioMsg *)packetbuf_dataptr();
+    
+
+     
     if(packetbuf_datalen()==sizeof(PhyRadioMsg))
     {
       PhyRadioMsg *recmeg =(PhyRadioMsg *)packetbuf_dataptr();
-      
+      if(recmeg->src_addrl == radio->shortaddr)
+      return;
       switch(recmeg->frame_type){
       
       case FRAME_TYPE_TIME_SYNCH:
-       if(mac.IsSyched)
-        break;
+        if(mac.IsSyched){
+          //tdmasend(NULL); 
+          break;
+        }
+        
         
         macpara->IsSyched = true;
         //计算时间偏置
         macpara->timeoffset(macpara,recmeg->time_stamp);
         PRINTF("time-offset is %d the time is  %d \r\n",mac.time_offset,macpara->get_synch_time(macpara));
-        void *ptr=NULL;
-        tdmasend(ptr);      
+        tdmasend(NULL);      
         break;
         
-      case FRAME_TYPE_BSM:
+        case FRAME_TYPE_BSM:
         uart_printf("receive bsm from %d time %d \r\n",recmeg->moteid,macpara->get_synch_time(macpara));
         break;
       }
@@ -152,19 +162,6 @@ void packet_input_arch(void){
     }
     
  
-}
-/*********************************************************************************************************
-** Function name:       get_cluster_name
-** Descriptions:        获取分簇编号
-** input parameters:    moteid
-** output parameters:   无
-** Returned value:      0
-** Created by:          张校源
-** Created Date:        2018-04-07
-*********************************************************************************************************/
-
-uint16_t get_cluster_name(uint16_t moteid){
-  return (((moteid-1)/5)+1);
 }
 
 /*********************************************************************************************************
@@ -207,15 +204,38 @@ void timeoffset_calc(macfct *macpara,uint32_t time){
 *********************************************************************************************************/
 
 void frame_init(PhyRadioMsg * msg,uint16_t frametype){
-      msg->fcf=0x8861;
-      msg->seq=0;
-      msg->dest_pid=0xffff;
-      msg->src_pid=0x1234;
+      radio_para *radio = (radio_para *)&radiopara;
+      msg->fcfl=0x61;
+      msg->fcfh=0x88;
+      msg->seq=1;
+      msg->dest_pidl=(radio->pan_id & 0x00FF) ;
+      msg->dest_pidh=((radio->pan_id >> 8) & 0x00FF) ;
+      msg->des_addrl=0x40;
+      msg->des_addrh=0x12;
+      msg->src_addrl=(radio->shortaddr & 0x00FF);
+      msg->src_addrh=((radio->shortaddr >> 8) & 0x00FF) ;
       msg->frame_type=frametype;
       msg->danger=random_rand()%200;
       msg->moteid=get_moteid();
       msg->network_id = get_cluster_name(get_moteid());
       msg->time_stamp=RTIMER_NOW();
+      
+      //广播帧设置Frame Control Field 以及目的地址
+      if(frametype == FRAME_TYPE_BSM ) 
+      {
+        msg->fcfl = 0x41;   
+        msg->des_addrl = 0xFF;
+        msg->des_addrh = 0xFF;
+      }
+      
+      if(frametype ==FRAME_TYPE_TIME_SYNCH ) 
+      {
+        msg->fcfl = 0x41;   
+        msg->des_addrl = 0xFF;
+        msg->des_addrh = 0xFF;
+        msg->dest_pidh = 0xFF;
+        msg->dest_pidl = 0xFF;
+      }
 }
 
 /*********************************************************************************************************
@@ -229,23 +249,17 @@ PROCESS(time_synch_process, "time_synch");
 PROCESS_THREAD(time_synch_process, ev, data)
 {
   PROCESS_BEGIN();
-  uint8_t  i;  
   while(1)
    {
       static struct etimer et2;
       etimer_set(&et2, CLOCK_SECOND/2);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et2));
       if(get_moteid()==TIME_SYNCH_NODE){
-       uart_printf("time_synch_process\r\n");
+      uart_printf("time_synch_process\r\n");
       frame_init(&frame,FRAME_TYPE_TIME_SYNCH);
      
       NETSTACK_RADIO.send(&frame,sizeof(PhyRadioMsg));
-      i++;
-      if (i>10)
-      {
-        uart_printf("break\r\n");
-        break;
-      }
+
     }
   }
  
@@ -264,18 +278,17 @@ PROCESS_THREAD(time_synch_process, ev, data)
 
 void tdmasend(void *ptr){
    uint32_t now, temp;
-   static struct rtimer rt2;
+
    int r;
+   
    macfct *macpara = &mac;
    
    frame_init(&frame,FRAME_TYPE_BSM);
    NETSTACK_RADIO.send(&frame,sizeof(PhyRadioMsg));
-   
    now =macpara->get_synch_time(macpara);
    
    temp = PEROID_LENGTH-(now%PEROID_LENGTH)+(get_moteid()%10)*SLOT_LENGTH;
    r=rtimer_set(&rt2, (rtimer_clock_t)(now+temp+GUARD_PERIOD),1,(rtimer_callback_t)tdmasend,NULL);
-   
    
    if(r){
       uart_printf("rtimer error\r\n");

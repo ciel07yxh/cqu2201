@@ -263,6 +263,7 @@ send_list(mac_callback_t sent, void *ptr, struct rdc_buf_list *buf_list)
   }
 }
 /*---------------------------------------------------------------------------*/
+#ifndef RECIVE_SELF
 static void
 packet_input(void)
 {
@@ -329,6 +330,8 @@ packet_input(void)
     }
   }
 }
+
+#endif
 /*---------------------------------------------------------------------------*/
 static int
 on(void)

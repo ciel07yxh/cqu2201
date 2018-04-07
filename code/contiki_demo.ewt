@@ -3194,5 +3194,14 @@
         <file>
             <name>$PROJ_DIR$\User\phy_process.h</name>
         </file>
+        <file>
+            <name>$PROJ_DIR$\User\radio_para.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\radio_para.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\radio_para.h</name>
+        </file>
     </group>
 </project>

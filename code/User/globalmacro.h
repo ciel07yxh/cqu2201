@@ -27,4 +27,4 @@
 #define RECIVE_SELF 1
 #define TIME_STAMP  1
 #define PRINT_FRAME 0
-#define TIME_SYNCH_NODE 43
+#define TIME_SYNCH_NODE 15

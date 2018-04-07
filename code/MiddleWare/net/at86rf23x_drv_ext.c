@@ -28,6 +28,8 @@
 #include "contiki-conf.h"
 #include "services/sys_services.h"
 #include "includes.h"
+#include "radio_para.h"
+#include "runtime/uartstdio.h"
 /*********************************************************************************************************
 ** 是否使能调试功能
 *********************************************************************************************************/
@@ -519,6 +521,8 @@ static int init(void)
 {
    uint32 temp;
    tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
+   radio_para_init();
+   radio_para *radio = (radio_para *)&radiopara;
    
     /*
     ** Step 1, 延时，等待芯片正常上电
@@ -535,7 +539,8 @@ static int init(void)
    
    GPIOConfigSet(RF_RSTN_BASE, RF_RSTN_PIN, GPIO_OUT_PP | GPIO_SPEED_50MHZ);
    GPIOConfigSet(RF_SPI_SEL_BASE, RF_SPI_SEL_PIN, GPIO_OUT_PP | GPIO_SPEED_50MHZ);
-   GPIOConfigSet(RF_SLP_TR_BASE, RF_SLP_TR_PIN, GPIO_OUT_PP | GPIO_SPEED_50MHZ);
+   GPIOConfigSet(RF_SLP_TR_BASE
+                 , RF_SLP_TR_PIN, GPIO_OUT_PP | GPIO_SPEED_50MHZ);
 
    // RF DIG2设置为输入，用来检查帧起始标志
    GPIOConfigSet(RF_DIG2_BASE, RF_DIG2_PIN, GPIO_DIR_IN_Floating);
@@ -563,9 +568,23 @@ static int init(void)
     /* Force transition to TRX_OFF */
    trx_state_set(STATE_FORCE_TRX_OFF);
    BUSYWAIT_UNTIL(0, RTIMER_SECOND * TIME_PLL_ON_TO_TRX_OFF / 1000000);
-   uint8_t ieee_addr_64[8]={0,0,0,0,0,0,0,1};
-   //ieee_set_pan_addr(0x1420,0x0203,ieee_addr_64);
-    /*
+
+   //在TRX_OFF 状态下才能成功设置地址
+   /*
+    硬件地址过滤同时对 PANID 以及 目的地址 （短地址和长地址）进行判断
+     根据收到的帧结构进行判定
+      四种情况：
+                PANID           DES_ADDR        Result
+                Match           Match           ACK
+                Match           Un-Match        NO ACK
+                Un-Match        Match           NO ACK
+                Un-Match        Un-Match        NO ACK
+    */
+    trx_reg_write(RG_PAN_ID_0, (radio->pan_id & 0x00FF));
+    trx_reg_write(RG_PAN_ID_1, ((radio->pan_id >> 8) & 0x00FF));
+    trx_reg_write(RG_SHORT_ADDR_0, radio->shortaddr & 0x00ff);
+    trx_reg_write(RG_SHORT_ADDR_1, (radio->shortaddr >> 8) & 0x00ff);
+/*
     ** Step 4, 读射频芯片ID
     */
    temp = 0;
@@ -602,8 +621,8 @@ static int init(void)
     /*
     ** Step 6, 扩展工作模式配置
     */  
-    trx_bit_write(SR_MAX_FRAME_RETRIES, 0);
-    trx_bit_write(SR_MAX_CSMA_RETRIES, 1);
+    trx_bit_write(SR_MAX_FRAME_RETRIES, radio->max_frame_retrise);
+    trx_bit_write(SR_MAX_CSMA_RETRIES, radio->max_csma_retries);
     temp = trx_rand_get();
     trx_bit_write(SR_CSMA_SEED_1, ((temp >> 8) & 0x07));
     trx_reg_write(RG_CSMA_SEED_0, (temp & 0xff));
@@ -658,9 +677,10 @@ static int init(void)
     **  0xE --------->-12db            0xE --------->-12db
     **  0xF --------->-17db            0xF --------->-17db
     */
-     trx_bit_write(SR_TX_PWR, 0x6);
+     trx_bit_write(SR_TX_PWR, radio->tx_power);
      PRINTF("The RF transmit power is setting with register value %d!\r\n", trx_bit_read(SR_TX_PWR));
-   
+    
+;
     /*
     ** Step 11, 通信信道设置，2.4G的只能去11-26的值; 通信地址
     */
@@ -676,7 +696,7 @@ static int init(void)
     ** Step 12, 接受滤波配置
     */
     trx_bit_write(SR_AACK_FVN_MODE, 2);
-    trx_bit_write(SR_AACK_PROM_MODE, 1);
+    trx_bit_write(SR_AACK_PROM_MODE, 0);
     trx_bit_write(SR_AACK_I_AM_COORD, 0);
     trx_bit_write(SR_AACK_UPLD_RES_FT, 0);
     trx_bit_write(SR_AACK_FLTR_RES_FT, 0);
@@ -717,7 +737,7 @@ static int init(void)
     /*
     ** Step 18, 通信信道设置，信道在contiki-net-conf.h中配置，2.4G的只能去11-26的值
     */
-    trx_bit_write(SR_CHANNEL, IEEE802154_RF_CONF_CHANNEL);
+    trx_bit_write(SR_CHANNEL, radio->channel);
     PRINTF("The RF commucation channel is %d!\r\n", trx_bit_read(SR_CHANNEL));
     
     // 启动线程
