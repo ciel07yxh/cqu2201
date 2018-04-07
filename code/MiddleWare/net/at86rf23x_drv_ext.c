@@ -30,6 +30,7 @@
 #include "includes.h"
 #include "radio_para.h"
 #include "runtime/uartstdio.h"
+#include "phy_process.h"
 /*********************************************************************************************************
 ** 是否使能调试功能
 *********************************************************************************************************/
@@ -1087,13 +1088,11 @@ static int off(void)
 static void at86rf231_isr(void)
 {
    RF_IRQ_CLEAR();
+    macfct *macpara = &mac;
+     macpara->time_stamp = RTIMER_NOW();
    process_poll(&at86rf231_process);
-#if TIME_STAMP
-   macfct *macpara = &mac;
-   //如果没有时间同步，则记录中断的时间
-   if(!macpara->IsSyched)
-      macpara->time_stamp = RTIMER_NOW();
-#endif  
+   
+ 
 }
 
 /*********************************************************************************************************

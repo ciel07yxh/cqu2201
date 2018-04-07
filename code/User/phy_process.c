@@ -27,10 +27,11 @@
 #include "globalmacro.h"
 #include "contiki.h"
 #include <string.h>
+#include "runtime/uartstdio.h"
 /*********************************************************************************************************
 ** 是否使能调试功能
 *********************************************************************************************************/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include "runtime/uartstdio.h"
 #include <stdio.h>
@@ -114,7 +115,10 @@ PROCESS_THREAD(phy_receive_process, ev, data)
 *********************************************************************************************************/
 
 void packet_input_arch(void){
-  
+    macfct *macpara = &mac;
+    radio_para *radio = (radio_para *)&radiopara;
+    
+    
 #if PRINT_FRAME
       uint8_t *buf;
       uint8_t i;
@@ -126,8 +130,8 @@ void packet_input_arch(void){
       uart_printf("\r\n");
     
 #endif 
-    macfct *macpara = &mac;
-    radio_para *radio = (radio_para *)&radiopara;
+    
+
     //PhyRadioMsg *recmeg =(PhyRadioMsg *)packetbuf_dataptr();
     
 
@@ -135,8 +139,19 @@ void packet_input_arch(void){
     if(packetbuf_datalen()==sizeof(PhyRadioMsg))
     {
       PhyRadioMsg *recmeg =(PhyRadioMsg *)packetbuf_dataptr();
+      //BUG 来自自己的帧会被接受
       if(recmeg->src_addrl == radio->shortaddr)
-      return;
+        return;
+    
+#if PACKET_DELAY
+#if TIME_STAMP
+        
+        if(macpara->IsSyched && recmeg->src_addrl!=TIME_SYNCH_NODE)
+          uart_printf("receive %d to %d delay is %d \r\n",recmeg->src_addrl,
+                                                    radio->shortaddr,
+                                                    (macpara->time_stamp- recmeg->time_stamp-macpara->time_offset));
+#endif
+#endif
       switch(recmeg->frame_type){
       
       case FRAME_TYPE_TIME_SYNCH:
@@ -154,7 +169,7 @@ void packet_input_arch(void){
         break;
         
         case FRAME_TYPE_BSM:
-        uart_printf("receive bsm from %d time %d \r\n",recmeg->moteid,macpara->get_synch_time(macpara));
+        //uart_printf("receive bsm from %d time %d \r\n",recmeg->moteid,macpara->get_synch_time(macpara));
         break;
       }
       
@@ -205,6 +220,7 @@ void timeoffset_calc(macfct *macpara,uint32_t time){
 
 void frame_init(PhyRadioMsg * msg,uint16_t frametype){
       radio_para *radio = (radio_para *)&radiopara;
+      macfct *macpara = &mac;
       msg->fcfl=0x61;
       msg->fcfh=0x88;
       msg->seq=1;
@@ -218,7 +234,7 @@ void frame_init(PhyRadioMsg * msg,uint16_t frametype){
       msg->danger=random_rand()%200;
       msg->moteid=get_moteid();
       msg->network_id = get_cluster_name(get_moteid());
-      msg->time_stamp=RTIMER_NOW();
+      msg->time_stamp=macpara->get_synch_time(macpara);
       
       //广播帧设置Frame Control Field 以及目的地址
       if(frametype == FRAME_TYPE_BSM ) 

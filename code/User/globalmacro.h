@@ -24,7 +24,8 @@
 *********************************************************************************************************/
 
 //定义是否启用自己定义的线程接管物理层
-#define RECIVE_SELF 1
-#define TIME_STAMP  1
-#define PRINT_FRAME 0
+#define RECIVE_SELF     1
+#define TIME_STAMP      1
+#define PRINT_FRAME     0
 #define TIME_SYNCH_NODE 15
+#define PACKET_DELAY    1
