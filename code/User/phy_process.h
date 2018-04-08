@@ -11,10 +11,11 @@
 
 
 
-
-#define SLOT_LENGTH (1000)//假设簇内10个节点,periodlength 
-#define PEROID_LENGTH (10000)
-#define GUARD_PERIOD 100
+#define NR_SLOTS        25                              //时隙分割数量
+#define BSM_FRE_HZ      10                              //BSM 10Hz
+#define PEROID_LENGTH   (RTIMER_SECOND/BSM_FRE_HZ)      //BSM 周期时间     
+#define SLOT_LENGTH     (PEROID_LENGTH / NR_SLOTS)      //时隙长度
+#define GUARD_PERIOD    (PEROID_LENGTH / (NR_SLOTS*2))  //保护间隔
 
 
 
@@ -46,6 +47,7 @@ typedef struct mac {
         uint8_t  IsSyched;
         uint32_t time_stamp;
         int32_t  time_offset;
+        int32_t  time_offset_period_align;         //用于时间同步周期对齐
         void (*timeoffset)(struct mac *macpara,uint32_t time);
         rtimer_clock_t (*get_synch_time)(struct mac *macpara);
 }macfct;

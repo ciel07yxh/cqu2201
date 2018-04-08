@@ -51,9 +51,14 @@ macfct mac={
   0,
   0,
   0,
+  0,
 timeoffset_calc,
 get_synch_time
 };
+//BSM帧测试（发送一定次数）
+#if BSM_FREAM_TEST
+uint16_t frame_to_send_times=BSM_FRAME_TEST_TIMES;
+#endif
 
 static struct rtimer rt2;
 /*********************************************************************************************************
@@ -73,11 +78,8 @@ PROCESS_THREAD(phy_send_process, ev, data)
   PROCESS_BEGIN();
   static struct etimer et1;
   while(1){
-   //frame_init(&frame,FRAME_TYPE_BSM);
    etimer_set(&et1, CLOCK_SECOND);
    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et1));
-   //PRINTF("sending\r\n"); /*向串口打印字符串"Hello,world"*/ 
-    //NETSTACK_RADIO.send(&frame,sizeof(PhyRadioMsg));
   }
   PROCESS_END();
 }
@@ -118,7 +120,7 @@ void packet_input_arch(void){
     macfct *macpara = &mac;
     radio_para *radio = (radio_para *)&radiopara;
     
-    
+    //打印帧内容
 #if PRINT_FRAME
       uint8_t *buf;
       uint8_t i;
@@ -131,18 +133,14 @@ void packet_input_arch(void){
     
 #endif 
     
-
-    //PhyRadioMsg *recmeg =(PhyRadioMsg *)packetbuf_dataptr();
-    
-
-     
+    //收到符合长度的帧
     if(packetbuf_datalen()==sizeof(PhyRadioMsg))
     {
       PhyRadioMsg *recmeg =(PhyRadioMsg *)packetbuf_dataptr();
       //BUG 来自自己的帧会被接受
       if(recmeg->src_addrl == radio->shortaddr)
         return;
-    
+      //开启时延测试功能，如果是使能了时间同步进程
 #if PACKET_DELAY
 #if TIME_STAMP
         
@@ -152,11 +150,12 @@ void packet_input_arch(void){
                                                     (macpara->time_stamp- recmeg->time_stamp-macpara->time_offset));
 #endif
 #endif
+       //对收到的帧进行相应
       switch(recmeg->frame_type){
       
       case FRAME_TYPE_TIME_SYNCH:
+        //只同步一次
         if(mac.IsSyched){
-          //tdmasend(NULL); 
           break;
         }
         
@@ -165,11 +164,13 @@ void packet_input_arch(void){
         //计算时间偏置
         macpara->timeoffset(macpara,recmeg->time_stamp);
         PRINTF("time-offset is %d the time is  %d \r\n",mac.time_offset,macpara->get_synch_time(macpara));
-        tdmasend(NULL);      
+        static struct ctimer ct;
+        //开启BSM发送
+        ctimer_set(&ct, 4,tdmasend, NULL); 
         break;
         
         case FRAME_TYPE_BSM:
-        //uart_printf("receive bsm from %d time %d \r\n",recmeg->moteid,macpara->get_synch_time(macpara));
+        PRINTF("receive bsm from %d time %d \r\n",recmeg->moteid,macpara->get_synch_time(macpara));
         break;
       }
       
@@ -207,6 +208,11 @@ rtimer_clock_t get_synch_time(macfct *macpara){
 
 void timeoffset_calc(macfct *macpara,uint32_t time){
   macpara->time_offset = RTIMER_NOW() -time;
+  //对周期取与
+  macpara->time_offset_period_align=macpara->time_offset%PEROID_LENGTH;
+  //若果为负数
+  if(macpara->time_offset_period_align<0)
+    macpara->time_offset_period_align+=PEROID_LENGTH;
 } 
 /*********************************************************************************************************
 ** Function name:       frame_init
@@ -231,9 +237,11 @@ void frame_init(PhyRadioMsg * msg,uint16_t frametype){
       msg->src_addrl=(radio->shortaddr & 0x00FF);
       msg->src_addrh=((radio->shortaddr >> 8) & 0x00FF) ;
       msg->frame_type=frametype;
+      //危险程度
       msg->danger=random_rand()%200;
       msg->moteid=get_moteid();
       msg->network_id = get_cluster_name(get_moteid());
+      //装载进同步时间
       msg->time_stamp=macpara->get_synch_time(macpara);
       
       //广播帧设置Frame Control Field 以及目的地址
@@ -243,7 +251,7 @@ void frame_init(PhyRadioMsg * msg,uint16_t frametype){
         msg->des_addrl = 0xFF;
         msg->des_addrh = 0xFF;
       }
-      
+       //PANID 广播帧设置Frame Control Field 以及目的地址 目的PAIID
       if(frametype ==FRAME_TYPE_TIME_SYNCH ) 
       {
         msg->fcfl = 0x41;   
@@ -268,12 +276,12 @@ PROCESS_THREAD(time_synch_process, ev, data)
   while(1)
    {
       static struct etimer et2;
-      etimer_set(&et2, CLOCK_SECOND/2);
+      etimer_set(&et2, CLOCK_SECOND);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et2));
       if(get_moteid()==TIME_SYNCH_NODE){
       uart_printf("time_synch_process\r\n");
+      //时间同步帧发送
       frame_init(&frame,FRAME_TYPE_TIME_SYNCH);
-     
       NETSTACK_RADIO.send(&frame,sizeof(PhyRadioMsg));
 
     }
@@ -293,23 +301,35 @@ PROCESS_THREAD(time_synch_process, ev, data)
 *********************************************************************************************************/
 
 void tdmasend(void *ptr){
-   uint32_t now, temp;
-
+   uint32_t now;
+   int32_t temp;
    int r;
-   
+   uint16_t id = get_moteid();
    macfct *macpara = &mac;
+#if BSM_FREAM_TEST
+   frame_to_send_times--;
+   if(frame_to_send_times<=1)
+   {
+      
+     return;
+     
+   }
+   PRINTF("sendtimes %d\r\n",frame_to_send_times);
+#endif
    
    frame_init(&frame,FRAME_TYPE_BSM);
    NETSTACK_RADIO.send(&frame,sizeof(PhyRadioMsg));
-   now =macpara->get_synch_time(macpara);
+   //获取现在时钟
+   now = RTIMER_NOW();
+   //获取下一次发送时钟
+   temp = PEROID_LENGTH-(now%PEROID_LENGTH)+(id%NR_SLOTS)*SLOT_LENGTH +macpara->time_offset_period_align;
+   //定时 传递回调函数
+   r=rtimer_set(&rt2, (rtimer_clock_t)(now+temp+GUARD_PERIOD),1,(rtimer_callback_t)tdmasend,ptr);
    
-   temp = PEROID_LENGTH-(now%PEROID_LENGTH)+(get_moteid()%10)*SLOT_LENGTH;
-   r=rtimer_set(&rt2, (rtimer_clock_t)(now+temp+GUARD_PERIOD),1,(rtimer_callback_t)tdmasend,NULL);
-   
+   PRINTF("tdma send %d %d %d %d \r\n",temp,now,GUARD_PERIOD,SLOT_LENGTH);
    if(r){
-      uart_printf("rtimer error\r\n");
+      PRINTF("rtimer error\r\n");
     }
 
-   //uart_printf("tdma send %d %d\r\n",moteid,time_synch_rec((uint8_t *)send_buff));
 }
 

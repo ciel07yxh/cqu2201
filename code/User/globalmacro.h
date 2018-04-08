@@ -24,8 +24,17 @@
 *********************************************************************************************************/
 
 //定义是否启用自己定义的线程接管物理层
-#define RECIVE_SELF     1
-#define TIME_STAMP      1
-#define PRINT_FRAME     0
-#define TIME_SYNCH_NODE 15
-#define PACKET_DELAY    1
+#define RECIVE_SELF                     1
+//开启时间同步进程
+#define TIME_STAMP                      1
+//打印物理层接受的数据
+#define PRINT_FRAME                     0
+//时间同步节点
+#define TIME_SYNCH_NODE                 15
+//帧延迟测试打印
+#define PACKET_DELAY                    1
+//BSM发送制定帧 与发送次数
+#define BSM_FREAM_TEST                  1
+#define BSM_FRAME_TEST_TIMES            3000
+//开启或关闭 混杂模式 开启PADID过滤
+#define ENABLE_PANID_FILTER             1

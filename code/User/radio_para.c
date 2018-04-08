@@ -40,6 +40,28 @@ radio_para radiopara;
 *********************************************************************************************************/
 //TODO 根据节点号设置不同的功率
 
+    /*
+    ** Step 10, 发送功率设置
+    **  AT86RF231                      AT86RF233
+    **  0x0 --------->3.0db            0x0 --------->4.0db
+    **  0x1 --------->2.8db            0x1 --------->3.7db
+    **  0x2 --------->2.3db            0x2 --------->3.4db
+    **  0x3 --------->1.8db            0x3 --------->3.0db
+    **  0x4 --------->1.3db            0x4 --------->2.5db
+    **  0x5 --------->0.7db            0x5 --------->2.0db
+    **  0x6 --------->0.0db            0x6 --------->1.0db
+    **  0x7 --------->-1db             0x7 --------->0.0db
+    **  0x8 --------->-2db             0x8 --------->-1db
+    **  0x9 --------->-3db             0x9 --------->-2db
+    **  0xA --------->-4db             0xA --------->-3db
+    **  0xB --------->-5db             0xB --------->-4db
+    **  0xC --------->-7db             0xC --------->-6db
+    **  0xD --------->-9db             0xD --------->-8db
+    **  0xE --------->-12db            0xE --------->-12db
+    **  0xF --------->-17db            0xF --------->-17db
+    */
+
+
 void radio_para_init(){
     radiopara.shortaddr = get_moteid();
     radiopara.pan_id = get_cluster_name(radiopara.shortaddr);
@@ -47,7 +69,11 @@ void radio_para_init(){
     radiopara.max_csma_retries = 0x03;
     radiopara.tx_power = 0x0E;
     radiopara.channel = DEFAULT_CHANNEL;
-    radiopara.pancooder =DEEFAULT_COODER;
+#if ENABLE_PANID_FILTER
+    radiopara.panid_filter = 0;
+#else
+    radiopara.panid_filter = 1;
+#endif
     if(get_moteid() == TIME_SYNCH_NODE )
       radiopara.tx_power = 0x02;
 }

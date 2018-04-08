@@ -120,6 +120,7 @@ int main (void)
     process_start(&etimer_process, NULL);
     ctimer_init();
     //TODO:判断需要初始化哪些物理层功能
+    //初始化之后需要开启
     //contiki_net_init();  
     NETSTACK_RADIO.init();
     NETSTACK_RDC.init();

@@ -697,7 +697,7 @@ static int init(void)
     ** Step 12, ½ÓÊÜÂË²¨ÅäÖÃ
     */
     trx_bit_write(SR_AACK_FVN_MODE, 2);
-    trx_bit_write(SR_AACK_PROM_MODE, 0);
+    trx_bit_write(SR_AACK_PROM_MODE, radio->panid_filter);
     trx_bit_write(SR_AACK_I_AM_COORD, 0);
     trx_bit_write(SR_AACK_UPLD_RES_FT, 0);
     trx_bit_write(SR_AACK_FLTR_RES_FT, 0);
