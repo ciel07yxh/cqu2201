@@ -42,6 +42,15 @@ typedef struct radio_para{
   uint8_t channel;                      /* 取值范围为  11-26
                                           15, 16, 21, 22是与WIFI不干扰的信道 */
   uint8_t panid_filter;                 //是否开启混杂模式       
+  uint8_t seq;                          //帧系列号
+  
+  //统计信息
+  uint16_t transmit_times;              //发送次数
+  uint16_t badcrc_times;                
+  uint16_t transmit_failed_times;
+  uint16_t channel_access_failed_times;
+  uint16_t no_ack_times;
+  uint16_t transmit_success_times;
 }radio_para;
 
 
@@ -80,7 +89,7 @@ typedef struct radio_para{
 *********************************************************************************************************/
 extern radio_para radiopara;
 void radio_para_init();
-
+void report_radio_statistics(void);
 
 
 #endif

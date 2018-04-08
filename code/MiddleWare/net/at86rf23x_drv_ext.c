@@ -847,6 +847,8 @@ static int send(const void *payload, unsigned short payload_len)
 {
   uint8 enSendState;
   tAt86RFInfo *ptRFInfo = (tAt86RFInfo *)&__GtAt86RF231_Drv;
+  radio_para *radio = (radio_para *)&radiopara;
+  
   sys_led_toggle(0);    //红灯
    
   /* If radio is off (slptr high), turn it on */
@@ -887,15 +889,21 @@ static int send(const void *payload, unsigned short payload_len)
      // 检查发送结果
      if (enSendState == 1) {                //success, data pending from addressee
           enSendState = RADIO_TX_OK;           //handle as ordinary success
+          radio->transmit_success_times++;
       }
 
       if (enSendState == 3) {        //CSMA channel access failure
           enSendState = RADIO_TX_COLLISION;
+          radio->channel_access_failed_times++;
       } else if (enSendState == 5) {        //Expected ACK, none received
+          radio->no_ack_times++;
           enSendState = RADIO_TX_NOACK;
       } else if (enSendState == 7) {        //Invalid (Can't happen since waited for idle above?)
+          radio->transmit_failed_times++;
           enSendState = RADIO_TX_ERR;
       } 
+     radio->transmit_times++;
+     radio->seq++;
    return enSendState;
 }
 
@@ -911,10 +919,11 @@ static int read(void *buf, unsigned short bufsize)
 {
     uint8_t temp;
     uint8_t lqi;
-
+    radio_para *radio = (radio_para *)&radiopara;
     temp = trx_bit_read(SR_RX_CRC_VALID);
     if(!temp) {
         RIMESTATS_ADD(badcrc);
+        radio->badcrc_times++;
         return 0;
     }
 

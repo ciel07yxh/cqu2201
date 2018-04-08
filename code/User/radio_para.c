@@ -24,20 +24,13 @@
 *********************************************************************************************************/
 #include "radio_para.h"
 #include "globalmacro.h"
+#include "runtime/uartstdio.h"
 /*********************************************************************************************************
   全局变量定义
 *********************************************************************************************************/
 radio_para radiopara;
 
-/*********************************************************************************************************
-** Function name:       radio_para_init
-** Descriptions:        物理层参数初始化
-** input parameters:    0
-** output parameters:   无
-** Returned value:      moteid
-** Created by:          张校源
-** Created Date:        2018-04-07
-*********************************************************************************************************/
+
 //TODO 根据节点号设置不同的功率
 
     /*
@@ -61,7 +54,15 @@ radio_para radiopara;
     **  0xF --------->-17db            0xF --------->-17db
     */
 
-
+/*********************************************************************************************************
+** Function name:       radio_para_init
+** Descriptions:        物理层参数初始化
+** input parameters:    0
+** output parameters:   无
+** Returned value:      moteid
+** Created by:          张校源
+** Created Date:        2018-04-07
+*********************************************************************************************************/
 void radio_para_init(){
     radiopara.shortaddr = get_moteid();
     radiopara.pan_id = get_cluster_name(radiopara.shortaddr);
@@ -76,6 +77,25 @@ void radio_para_init(){
 #endif
     if(get_moteid() == TIME_SYNCH_NODE )
       radiopara.tx_power = 0x02;
+}
+/*********************************************************************************************************
+** Function name:       report_radio_statistics
+** Descriptions:        打印物理层统计信息
+** input parameters:    0
+** output parameters:   无
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-04-07
+*********************************************************************************************************/
+void report_radio_statistics(void)
+{
+  uart_printf("transmit_times %d badcrc_times %d  transmit_failed_times %d channel_access_failed_times %d no_ack_times %d ,transmit_success_times %d",
+              radiopara.transmit_times,
+                  radiopara.badcrc_times,
+                    radiopara.transmit_failed_times,
+                      radiopara.channel_access_failed_times,
+                        radiopara.no_ack_times,
+                          radiopara.transmit_success_times);
 }
 
 /*********************************************************************************************************

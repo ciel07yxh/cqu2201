@@ -229,7 +229,7 @@ void frame_init(PhyRadioMsg * msg,uint16_t frametype){
       macfct *macpara = &mac;
       msg->fcfl=0x61;
       msg->fcfh=0x88;
-      msg->seq=1;
+      msg->seq=radio->seq;              //Ö¡ÏµÁÐºÅ
       msg->dest_pidl=(radio->pan_id & 0x00FF) ;
       msg->dest_pidh=((radio->pan_id >> 8) & 0x00FF) ;
       msg->des_addrl=0x40;
@@ -310,7 +310,7 @@ void tdmasend(void *ptr){
    frame_to_send_times--;
    if(frame_to_send_times<=1)
    {
-      
+     report_radio_statistics();
      return;
      
    }
@@ -332,4 +332,6 @@ void tdmasend(void *ptr){
     }
 
 }
+
+
 
