@@ -3195,16 +3195,19 @@
             <name>$PROJ_DIR$\User\moteid.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\User\phy_process.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\User\phy_process.h</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\User\radio_para.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\User\radio_para.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\usr_framer.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\usr_mac.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\usr_mac.h</name>
         </file>
     </group>
 </project>

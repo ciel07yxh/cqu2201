@@ -55,6 +55,8 @@ uint8_t CheckIfExist(uint16_t addr);
 void addAliveNode(uint16_t addr);
 void addAliveNodeInfo(uint16_t pos,uint16_t addr,int16_t delay);
 void report_node_info();
+void bsm_transmit_tdma();
+void time_synch_gps(void *ptr);
 #endif
 /*********************************************************************************************************
   END FILE 

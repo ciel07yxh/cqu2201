@@ -47,7 +47,7 @@
 #include "runtime/uartstdio.h"
 #include <string.h>
 #include "globalmacro.h"
-#include "phy_process.h"
+#include "usr_mac.h"
 #if CONTIKI_TARGET_COOJA
 #include "lib/simEnvChange.h"
 #endif /* CONTIKI_TARGET_COOJA */

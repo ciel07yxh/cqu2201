@@ -26,6 +26,17 @@
 #include "globalmacro.h"
 #include "runtime/uartstdio.h"
 /*********************************************************************************************************
+** 是否使能调试功能
+*********************************************************************************************************/
+#define DEBUG 0
+#if DEBUG
+#include "runtime/uartstdio.h"
+#include <stdio.h>
+#define PRINTF(...)   uart_printf(__VA_ARGS__)  //必须使用uart_printf（）函数
+#else
+#define PRINTF(...)
+#endif
+/*********************************************************************************************************
   全局变量定义
 *********************************************************************************************************/
 radio_para radiopara;
@@ -68,7 +79,7 @@ void radio_para_init(){
     radiopara.pan_id = get_cluster_name(radiopara.shortaddr);
     radiopara.max_frame_retrise = DEFAULT_MAX_FRAME_RETRIES;
     radiopara.max_csma_retries = 0x03;
-    radiopara.tx_power = 0x0D;
+    radiopara.tx_power = 0x0B;
     radiopara.channel = DEFAULT_CHANNEL;
 #if ENABLE_PANID_FILTER
     radiopara.panid_filter = 0;
@@ -89,7 +100,7 @@ void radio_para_init(){
 *********************************************************************************************************/
 void report_radio_statistics(void)
 {
-  uart_printf("transmit_times %d badcrc_times %d  transmit_failed_times %d channel_access_failed_times %d no_ack_times %d ,transmit_success_times %d\r\n",
+  PRINTF("report_radio_statistics: %d %d %d %d %d %d\r\n",
               radiopara.transmit_times,
                   radiopara.badcrc_times,
                     radiopara.transmit_failed_times,

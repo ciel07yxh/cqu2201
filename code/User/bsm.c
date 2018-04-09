@@ -23,12 +23,13 @@
 **
 *********************************************************************************************************/
 #include "bsm.h"
-#include "phy_process.h"
+#include "usr_mac.h"
 #include "globalmacro.h"
+#include "radio_para.h"
 /*********************************************************************************************************
 ** 是否使能调试功能
 *********************************************************************************************************/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include "runtime/uartstdio.h"
 #include <stdio.h>
@@ -41,9 +42,11 @@
  全局变量
 *********************************************************************************************************/
 route_info __routeinfo;
+//用来进行时间同步
+static struct ctimer ct1;
 //用来打印测试报告
 static struct ctimer ct2;
-
+static struct rtimer rt1;
 /*********************************************************************************************************
 ** Function name:       pacet_info_statistics_init
 ** Descriptions:        初始化地址池
@@ -170,11 +173,103 @@ void report_node_info(){
   {
     //计算时延
     (routeInfo->node_info+i)->delay =  (routeInfo->node_info+i)->delay_sum/(routeInfo->node_info+i)->receive_packet;
-    PRINTF("noid %d recivecout %d delay %d\r\n",(routeInfo->node_info+i)->source_addr,
+    PRINTF("node %d recivecout %d delay %d\r\n",(routeInfo->node_info+i)->source_addr,
                                                 (routeInfo->node_info+i)->receive_packet,
                                                   (routeInfo->node_info+i)->delay);
     }
 
+}
+
+
+/*********************************************************************************************************
+** Function name:       bsm_transmit_csma_ca
+** Descriptions:        使用Ctimer 进行csma_ca 周期回调发送
+** input parameters:    none
+** output parameters:   无
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-04-09
+*********************************************************************************************************/
+
+void bsm_transmit_csma_ca(){
+
+
+}
+
+
+/*********************************************************************************************************
+** Function name:       bsm_transmit_tdma
+** Descriptions:        使用Rtimer 进行TDMA 周期回调发送
+** input parameters:    none
+** output parameters:   无
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-04-09
+*********************************************************************************************************/
+
+void bsm_transmit_tdma(){
+  
+   uint32_t now;
+   int32_t temp;
+   int r;
+   uint16_t id = get_moteid();
+   macfct *macpara = &mac;
+   radio_para *radio = (radio_para *)&radiopara;
+   PhyRadioMsg bsm;
+#if BSM_FREAM_TEST
+   
+   if(radio->transmit_times >BSM_FRAME_TEST_TIMES)
+   {
+     report_radio_statistics();
+     return;
+     
+   }
+#endif
+   
+   frame_init(&bsm,FRAME_TYPE_BSM);
+   NETSTACK_RADIO.send(&bsm,sizeof(PhyRadioMsg));
+   //获取现在时钟
+   now = RTIMER_NOW();
+   //获取下一次发送时钟
+   temp = PEROID_LENGTH-(now%PEROID_LENGTH)+(id%NR_SLOTS)*SLOT_LENGTH +macpara->time_offset_period_align;
+   //定时 传递回调函数
+   r=rtimer_set(&rt1, (rtimer_clock_t)(now+temp+GUARD_PERIOD),1,(rtimer_callback_t)bsm_transmit_tdma,NULL);
+   
+   PRINTF("tdma send %d %d %d %d \r\n",temp,now,GUARD_PERIOD,SLOT_LENGTH);
+   if(r){
+      PRINTF("rtimer error\r\n");
+    }
+
+
+}
+
+
+/*********************************************************************************************************
+** FFunction name:       时间同步
+** Descriptions:        进行GPS时间同步信号模拟
+** input parameters:    同步帧发送次数
+** output parameters:   无
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-04-07
+*********************************************************************************************************/
+void time_synch_gps(void *ptr)
+{
+    uint8_t time_to_synch;
+    if(ptr!=NULL)
+    {
+      PRINTF("time_synch_gps %d\r\n",(*(uint8_t *)ptr));
+      time_to_synch=(*(uint8_t *)ptr)--;
+      if(time_to_synch==0)
+          return;
+    }
+
+      
+    PhyRadioMsg time_synch_frame;
+    frame_init(&time_synch_frame,FRAME_TYPE_TIME_SYNCH);
+    NETSTACK_RADIO.send(&time_synch_frame,sizeof(PhyRadioMsg));
+    ctimer_set(&ct1,CLOCK_SECOND,time_synch_gps, ptr); 
+  
 }
 
 /*********************************************************************************************************

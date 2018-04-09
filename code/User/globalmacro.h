@@ -31,6 +31,8 @@
 #define PRINT_FRAME                     0
 //时间同步节点
 #define TIME_SYNCH_NODE                 15
+//同步节点发送时间同步帧次数
+#define TIME_SYNCH_TIMES                5
 //帧延迟测试打印
 #define PACKET_DELAY                    1
 //BSM发送制定帧 与发送次数

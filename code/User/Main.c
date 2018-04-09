@@ -23,8 +23,8 @@
 **
 *********************************************************************************************************/
 #include "includes.h"
+#include "usr_mac.h"
 #include "globalmacro.h"
-#include "bsm.h"
 /*********************************************************************************************************
 **  全局变量定义
 *********************************************************************************************************/
@@ -39,27 +39,13 @@
 /*********************************************************************************************************
 **  外部函数声明
 *********************************************************************************************************/
-PROCESS_NAME(phy_receive_process);
-#ifdef RECIVE_SELF 
-PROCESS_NAME(phy_send_process);
-#endif
 
-#if  TIME_STAMP 
-  PROCESS_NAME(time_synch_process);
-#endif
 
 /*********************************************************************************************************
 **  自启动的线程
 *********************************************************************************************************/
 
-AUTOSTART_PROCESSES(
-#if RECIVE_SELF 
-  &phy_receive_process,
-#endif
-#if  TIME_STAMP 
-  &time_synch_process,
-#endif
-   &phy_send_process);
+AUTOSTART_PROCESSES(NULL);
 
 /*********************************************************************************************************
 **  操作系统需要的定义
@@ -86,7 +72,7 @@ int main (void)
 
     // 初始化控制台
     uart_stdio_init(115200);
-    moteid_init();
+   
 
     PRINTF("The Contiki System Start!\r\n");
 
@@ -102,11 +88,8 @@ int main (void)
     //TODO:判断需要初始化哪些物理层功能
     //初始化之后需要开启
     //contiki_net_init();  
-#if PACKET_INFO_STATISTICS
-    pacet_info_statistics_init();
-#endif 
-    NETSTACK_RADIO.init();
-    NETSTACK_RDC.init();
+    usr_mac_init();
+
     energest_init();
     ENERGEST_ON(ENERGEST_TYPE_CPU);
 
