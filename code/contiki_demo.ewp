@@ -66,7 +66,7 @@
                 </option>
                 <option>
                     <name>OGLastSavedByProductVersion</name>
-                    <state>8.11.1.13270</state>
+                    <state>8.10.1.12859</state>
                 </option>
                 <option>
                     <name>GeneralEnableMisra</name>
@@ -116,7 +116,7 @@
                 </option>
                 <option>
                     <name>GBECoreSlave</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>38</state>
                 </option>
                 <option>
@@ -133,7 +133,7 @@
                 </option>
                 <option>
                     <name>CoreVariant</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>38</state>
                 </option>
                 <option>
@@ -156,7 +156,7 @@
                 </option>
                 <option>
                     <name>GFPUCoreSlave2</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>38</state>
                 </option>
                 <option>
@@ -1136,7 +1136,7 @@
                 </option>
                 <option>
                     <name>GBECoreSlave</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>1</state>
                 </option>
                 <option>
@@ -1153,7 +1153,7 @@
                 </option>
                 <option>
                     <name>CoreVariant</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>0</state>
                 </option>
                 <option>
@@ -1176,7 +1176,7 @@
                 </option>
                 <option>
                     <name>GFPUCoreSlave2</name>
-                    <version>25</version>
+                    <version>24</version>
                     <state>0</state>
                 </option>
                 <option>
@@ -2933,6 +2933,12 @@
     </group>
     <group>
         <name>User</name>
+        <file>
+            <name>$PROJ_DIR$\User\bsm.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\bsm.h</name>
+        </file>
         <file>
             <name>$PROJ_DIR$\User\contiki-conf.h</name>
         </file>

@@ -24,6 +24,7 @@
 *********************************************************************************************************/
 #include "includes.h"
 #include "globalmacro.h"
+#include "bsm.h"
 /*********************************************************************************************************
 **  全局变量定义
 *********************************************************************************************************/
@@ -46,27 +47,6 @@ PROCESS_NAME(phy_send_process);
 #if  TIME_STAMP 
   PROCESS_NAME(time_synch_process);
 #endif
-/*********************************************************************************************************
-**  内部函数声明
-*********************************************************************************************************/
-PROCESS(led_process, "Blink1");
-PROCESS_THREAD(led_process, ev, data)
-{
-  PROCESS_BEGIN();
-  sys_led_toggle(1);
-
-  while(1)
-  {
-    static struct etimer et;
-
-    etimer_set(&et, CLOCK_SECOND);
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-
-    //PRINTF("The moteid is %d \r\n",get_moteid());
-  }
-   PROCESS_END();
-}
-
 
 /*********************************************************************************************************
 **  自启动的线程
@@ -122,6 +102,9 @@ int main (void)
     //TODO:判断需要初始化哪些物理层功能
     //初始化之后需要开启
     //contiki_net_init();  
+#if PACKET_INFO_STATISTICS
+    pacet_info_statistics_init();
+#endif 
     NETSTACK_RADIO.init();
     NETSTACK_RDC.init();
     energest_init();

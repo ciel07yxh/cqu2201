@@ -35,6 +35,11 @@
 #define PACKET_DELAY                    1
 //BSM发送制定帧 与发送次数
 #define BSM_FREAM_TEST                  1
-#define BSM_FRAME_TEST_TIMES            3000
+#define BSM_FRAME_TEST_TIMES            200
 //开启或关闭 混杂模式 开启PADID过滤
-#define ENABLE_PANID_FILTER             1
+#define ENABLE_PANID_FILTER             0
+//同步之后多少时间开始发送 BSM
+#define BSM_START_TIME                  5
+#define PACKET_INFO_STATISTICS          1
+//发送完成之后定时开启的时间
+#define PACKET_INTO_REPORT_TIME         50
