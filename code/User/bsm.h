@@ -37,6 +37,8 @@
 #define FALSE           0
 #define TRUE            1
 
+
+
 typedef struct node_info{
    uint16_t source_addr;
    uint16_t receive_packet;
@@ -49,6 +51,10 @@ typedef struct route_info{
   node_info node_info[MAX_ROUTE_COUNT]; 
 }route_info;
 
+
+extern route_info __routeinfo;
+extern uint8_t maxelement;
+
 void pacet_info_statistics_init();
 void pacet_info_statistics(uint16_t addr,int16_t delay);
 uint8_t CheckIfExist(uint16_t addr);
@@ -58,6 +64,7 @@ void report_node_info();
 void bsm_transmit_tdma(void *ptr);
 void bsm_transmit_csma_ca(void *ptr);
 void time_synch_gps(void *ptr);
+void pdr_info_send(void *ptr);
 #endif
 /*********************************************************************************************************
   END FILE 

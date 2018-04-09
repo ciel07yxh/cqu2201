@@ -96,6 +96,8 @@ void packet_input_arch(void)
     
 #endif 
     
+      pdr_info_frame_pase((uint8_t *)packetbuf_dataptr(),packetbuf_datalen());
+    
     //收到符合长度的帧
     if(packetbuf_datalen()==sizeof(PhyRadioMsg))
     {

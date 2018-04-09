@@ -26,8 +26,6 @@ void moteid_init(void)
 ** Created by:          张校源
 ** Created Date:        2018-04-07
 *********************************************************************************************************/
-
-
 uint16_t get_moteid(void)
 {
   return moteid;
@@ -42,7 +40,6 @@ uint16_t get_moteid(void)
 ** Created by:          张校源
 ** Created Date:        2018-04-07
 *********************************************************************************************************/
-
 uint16_t get_cluster_name(uint16_t moteid)
 {
   return (((moteid-1)/5)+1);

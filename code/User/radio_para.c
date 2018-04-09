@@ -80,7 +80,7 @@ void radio_para_init()
     radiopara.pan_id = get_cluster_name(radiopara.shortaddr);
     radiopara.max_frame_retrise = DEFAULT_MAX_FRAME_RETRIES;
     radiopara.max_csma_retries = 0x03;
-    radiopara.tx_power = 0x0B;
+    radiopara.tx_power = 0x00;
     radiopara.channel = DEFAULT_CHANNEL;
 #if TDMA_BSM_ENABLE
     radiopara.max_csma_retries = 0x07; //²»½øÐÐCSMA CA

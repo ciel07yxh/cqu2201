@@ -29,7 +29,7 @@
 /*********************************************************************************************************
 ** ÊÇ·ñÊ¹ÄÜµ÷ÊÔ¹¦ÄÜ
 *********************************************************************************************************/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include "runtime/uartstdio.h"
 #include <stdio.h>
@@ -46,10 +46,15 @@ route_info __routeinfo;
 static struct ctimer ct1;
 //ÓÃÀ´´òÓ¡²âÊÔ±¨¸æ
 static struct ctimer ct2;
+//ÓÃÀ´·¢ËÍ¶ª°üÂÊÍ³¼ÆÖ¡
+static struct ctimer ct3;
 static struct rtimer rt1;
 #if BSM_FREAM_TEST
 uint16_t send_time_count = BSM_FRAME_TEST_TIMES;
 #endif
+uint8_t pdr_frame_count;
+uint8_t maxelement;
+uint8_t pdr_send_count;
 /*********************************************************************************************************
 ** Function name:       pacet_info_statistics_init
 ** Descriptions:        ³õÊ¼»¯µØÖ·³Ø
@@ -64,7 +69,8 @@ void pacet_info_statistics_init()
 {
     route_info *routeInfo = (route_info *)&__routeinfo ;
     routeInfo->AliveNodesCount=1;
-    ctimer_set(&ct2, PACKET_INTO_REPORT_TIME*CLOCK_SECOND,report_node_info, NULL); 
+    maxelement = (127-sizeof(pdr_info_head))/sizeof(pdr_info_node);
+    //ctimer_set(&ct2, PACKET_INTO_REPORT_TIME*CLOCK_SECOND,report_node_info, NULL); 
 }
 
 /*********************************************************************************************************
@@ -130,7 +136,7 @@ void addAliveNode(uint16_t addr)//Ìí¼ÓID½øºòÑ¡ÁÐ±í
 {
     route_info *routeInfo = (route_info *)&__routeinfo ;
   
-    //PRINTF("addAliveNodeInfo %d %d\r\n",addr,routeInfo->AliveNodesCount);
+    PRINTF("addAliveNodeInfo %d %d\r\n",addr,routeInfo->AliveNodesCount);
   
     (routeInfo->node_info+routeInfo->AliveNodesCount)->source_addr = addr; //Ìí¼ÓµØÖ·
      routeInfo->AliveNodesCount++;
@@ -149,7 +155,7 @@ void addAliveNodeInfo(uint16_t pos,uint16_t addr,int16_t delay)//Ìí¼ÓID½øºòÑ¡ÁÐ±
 {
   route_info *routeInfo = (route_info *)&__routeinfo ;
   
-  //PRINTF("addAliveNodeInfo %d %d\r\n",pos,addr);
+  PRINTF("addAliveNodeInfo %d %d\r\n",pos,addr);
   
   if((routeInfo->node_info+pos)->source_addr = addr)
   {
@@ -180,7 +186,7 @@ void report_node_info()
   {
     //¼ÆËãÊ±ÑÓ
     (routeInfo->node_info+i)->delay =  (routeInfo->node_info+i)->delay_sum/(routeInfo->node_info+i)->receive_packet;
-    uart_printf("info %d recivecout %d delay %d\r\n",(routeInfo->node_info+i)->source_addr,
+    PRINTF("info %d recivecout %d delay %d\r\n",(routeInfo->node_info+i)->source_addr,
                                                 (routeInfo->node_info+i)->receive_packet,
                                                   (routeInfo->node_info+i)->delay);
    }
@@ -205,10 +211,22 @@ void bsm_transmit_csma_ca(void *ptr)
       
     PRINTF("send_time_count %d\r\n",(*(uint16_t *)ptr));
 #if BSM_FREAM_TEST
+    route_info *routeinfo = (route_info *)&__routeinfo;
+    uint8_t nodes_to_send =routeinfo->AliveNodesCount-1;
+    PRINTF("send_time_count %d\r\n",(*(uint16_t *)ptr));
     send_time_count--;
     if(!send_time_count)
     {
         report_radio_statistics();
+        report_node_info();
+        
+        if( nodes_to_send <= maxelement)
+          pdr_frame_count = 1;
+        if(nodes_to_send>maxelement)
+          pdr_frame_count = (nodes_to_send/maxelement)+1;
+        if(nodes_to_send>maxelement && (nodes_to_send%maxelement==0) )
+          pdr_frame_count-=1;      
+        ctimer_set(&ct3,CLOCK_SECOND*10,pdr_info_send,NULL); 
         return;
     }
 #endif
@@ -237,15 +255,27 @@ void bsm_transmit_tdma(void *ptr)
     int r;
     uint16_t id = get_moteid();
     macfct *macpara = &mac;
+    
     PhyRadioMsg bsm;
    
     
 #if BSM_FREAM_TEST
+    route_info *routeinfo = (route_info *)&__routeinfo;
+    uint8_t nodes_to_send =routeinfo->AliveNodesCount-1;
     PRINTF("send_time_count %d\r\n",(*(uint16_t *)ptr));
     send_time_count--;
     if(!send_time_count)
     {
         report_radio_statistics();
+        report_node_info();
+        
+        if( nodes_to_send <= maxelement)
+          pdr_frame_count = 1;
+        if(nodes_to_send>maxelement)
+          pdr_frame_count = (nodes_to_send/maxelement)+1;
+        if(nodes_to_send>maxelement && (nodes_to_send%maxelement==0) )
+          pdr_frame_count-=1;
+        ctimer_set(&ct3,CLOCK_SECOND*10,pdr_info_send,NULL); 
         return;
     }
 #endif
@@ -298,7 +328,42 @@ void time_synch_gps(void *ptr)
     ctimer_set(&ct1,CLOCK_SECOND,time_synch_gps, ptr); 
   
 }
+/*********************************************************************************************************
+** FFunction name:       pdr_info_send
+** Descriptions:        PDRÍ³¼ÆÐÅÏ¢Ö¡·¢ËÍ
+** input parameters:    ÎÞ
+** output parameters:   ÎÞ
+** Returned value:      0
+** Created by:          ÕÅÐ£Ô´
+** Created Date:        2018-04-10
+*********************************************************************************************************/
+
+
+void pdr_info_send(void *ptr)
+{
+    uint8_t buffer[128];
+    uint8_t bufferSize=0;
+    
+    if(pdr_send_count>=pdr_frame_count)
+        pdr_send_count=0;
+    
+    bufferSize=pdr_info_frame_create(FRAME_TYPE_PDR_INFO,
+                                                    buffer,
+                                                    pdr_send_count,maxelement,
+                                                    &__routeinfo);
+
+    NETSTACK_RADIO.send(buffer,bufferSize);
+    pdr_send_count++;
+    ctimer_set(&ct3,CLOCK_SECOND/10,pdr_info_send,NULL); 
+  
+}
+
+
 
 /*********************************************************************************************************
   END FILE 
 *********************************************************************************************************/
+
+
+
+

@@ -39,7 +39,7 @@
 #define BSM_FREAM_TEST                  1
 #define BSM_FRAME_TEST_TIMES            200
 //开启或关闭 混杂模式 开启PADID过滤
-#define ENABLE_PANID_FILTER             1
+#define ENABLE_PANID_FILTER             0
 //同步之后多少时间开始发送 BSM
 #define BSM_START_TIME                  5
 #define PACKET_INFO_STATISTICS          1
@@ -48,4 +48,4 @@
 //TDMA 不使能的时候使用csma_ca 使能时候关闭csma_ca
 #define TDMA_BSM_ENABLE                 1
 
-#define BSM_SEND_TOTAL_TIME                          
+#define START_PDR_INFO_TIME             5                          
