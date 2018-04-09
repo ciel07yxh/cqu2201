@@ -81,10 +81,15 @@ void radio_para_init(){
     radiopara.max_csma_retries = 0x03;
     radiopara.tx_power = 0x0B;
     radiopara.channel = DEFAULT_CHANNEL;
-#if ENABLE_PANID_FILTER
-    radiopara.panid_filter = 0;
+#if TDMA_BSM_ENABLE
+    radiopara.max_csma_retries = 0x07; //不进行CSMA CA
 #else
-    radiopara.panid_filter = 1;
+    radiopara.max_csma_retries = 0x01; //最多一次重试
+#endif 
+#if ENABLE_PANID_FILTER
+    radiopara.panid_filter = 0x0;
+#else
+    radiopara.panid_filter = 0x1;
 #endif
     if(get_moteid() == TIME_SYNCH_NODE )
       radiopara.tx_power = 0x02;

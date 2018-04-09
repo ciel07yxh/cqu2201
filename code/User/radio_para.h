@@ -77,7 +77,7 @@ typedef struct radio_para{
 
 
 //Ä¬ÈÏ²ÎÊý
-#define DEFAULT_MAX_FRAME_RETRIES       0x03
+#define DEFAULT_MAX_FRAME_RETRIES       0x00
 #define DEFAULT_MAX_CSMA_RETRIES        0x03
 #define DEFAULT_TX_POWER                0xD
 #define DEFAULT_CHANNEL                 16

@@ -41,9 +41,8 @@
 #include "usr_framer.h"
 #include "usr_mac.h"
 #include "bsm.h"
-uint8_t times = TIME_SYNCH_TIMES;
 static struct ctimer ct;
-
+uint16_t bsm_send_times = BSM_FRAME_TEST_TIMES;
 /*********************************************************************************************************
 ** Function name:       usr_mac_init
 ** Descriptions:        自定义mac层初始化
@@ -63,6 +62,8 @@ void usr_mac_init(void)
     NETSTACK_RADIO.init();
     NETSTACK_RADIO.on();
 #if TIME_STAMP
+    static uint8_t times = TIME_SYNCH_TIMES;
+
      if(get_moteid()==TIME_SYNCH_NODE)
        time_synch_gps((void *)&times);
 #endif
@@ -136,7 +137,18 @@ void packet_input_arch(void){
         macpara->timeoffset(macpara,recmeg->time_stamp);
         PRINTF("time-offset is %d the time is  %d \r\n",mac.time_offset,macpara->get_synch_time(macpara));
         //开启BSM发送
-        ctimer_set(&ct, BSM_START_TIME*CLOCK_SECOND,bsm_transmit_tdma, NULL); 
+
+        
+#if TDMA_BSM_ENABLE
+        PRINTF("BSM TDMA send  \r\n");
+        ctimer_set(&ct, BSM_START_TIME*CLOCK_SECOND,bsm_transmit_tdma,(void *)&bsm_send_times);
+#else
+        PRINTF("BSM CSMA/CA send\r\n");
+        ctimer_set(&ct, BSM_START_TIME*CLOCK_SECOND,bsm_transmit_csma_ca,(void *)&bsm_send_times);
+        
+#endif 
+    
+         
         break;
         
         case FRAME_TYPE_BSM:

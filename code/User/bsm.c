@@ -29,7 +29,7 @@
 /*********************************************************************************************************
 ** ÊÇ·ñÊ¹ÄÜµ÷ÊÔ¹¦ÄÜ
 *********************************************************************************************************/
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include "runtime/uartstdio.h"
 #include <stdio.h>
@@ -47,6 +47,9 @@ static struct ctimer ct1;
 //ÓÃÀ´´òÓ¡²âÊÔ±¨¸æ
 static struct ctimer ct2;
 static struct rtimer rt1;
+#if BSM_FREAM_TEST
+uint16_t send_time_count = BSM_FRAME_TEST_TIMES;
+#endif
 /*********************************************************************************************************
 ** Function name:       pacet_info_statistics_init
 ** Descriptions:        ³õÊ¼»¯µØÖ·³Ø
@@ -125,7 +128,7 @@ void addAliveNode(uint16_t addr)//Ìí¼ÓID½øºòÑ¡ÁÐ±í
 {
   route_info *routeInfo = (route_info *)&__routeinfo ;
   
-  PRINTF("addAliveNodeInfo %d %d\r\n",addr,routeInfo->AliveNodesCount);
+  //PRINTF("addAliveNodeInfo %d %d\r\n",addr,routeInfo->AliveNodesCount);
   
   (routeInfo->node_info+routeInfo->AliveNodesCount)->source_addr = addr; //Ìí¼ÓµØÖ·
   routeInfo->AliveNodesCount++;
@@ -144,7 +147,7 @@ void addAliveNodeInfo(uint16_t pos,uint16_t addr,int16_t delay)//Ìí¼ÓID½øºòÑ¡ÁÐ±
 {
   route_info *routeInfo = (route_info *)&__routeinfo ;
   
-  PRINTF("addAliveNodeInfo %d %d\r\n",pos,addr);
+  //PRINTF("addAliveNodeInfo %d %d\r\n",pos,addr);
   
   if((routeInfo->node_info+pos)->source_addr = addr){
     (routeInfo->node_info+pos)->receive_packet++;
@@ -173,7 +176,7 @@ void report_node_info(){
   {
     //¼ÆËãÊ±ÑÓ
     (routeInfo->node_info+i)->delay =  (routeInfo->node_info+i)->delay_sum/(routeInfo->node_info+i)->receive_packet;
-    PRINTF("node %d recivecout %d delay %d\r\n",(routeInfo->node_info+i)->source_addr,
+    uart_printf("info %d recivecout %d delay %d\r\n",(routeInfo->node_info+i)->source_addr,
                                                 (routeInfo->node_info+i)->receive_packet,
                                                   (routeInfo->node_info+i)->delay);
     }
@@ -191,9 +194,23 @@ void report_node_info(){
 ** Created Date:        2018-04-09
 *********************************************************************************************************/
 
-void bsm_transmit_csma_ca(){
-
-
+void bsm_transmit_csma_ca(void *ptr){
+    static struct ctimer ct3;
+    PhyRadioMsg bsm;
+      
+    PRINTF("send_time_count %d\r\n",(*(uint16_t *)ptr));
+#if BSM_FREAM_TEST
+    send_time_count--;
+    if(!send_time_count)
+    {
+        report_radio_statistics();
+        return;
+    }
+#endif
+    frame_init(&bsm,FRAME_TYPE_BSM);
+    NETSTACK_RADIO.send(&bsm,sizeof(PhyRadioMsg));
+    
+    ctimer_set(&ct3, CLOCK_SECOND/10,bsm_transmit_csma_ca,NULL); 
 }
 
 
@@ -207,35 +224,39 @@ void bsm_transmit_csma_ca(){
 ** Created Date:        2018-04-09
 *********************************************************************************************************/
 
-void bsm_transmit_tdma(){
+void bsm_transmit_tdma(void *ptr){
   
-   uint32_t now;
-   int32_t temp;
-   int r;
-   uint16_t id = get_moteid();
-   macfct *macpara = &mac;
-   radio_para *radio = (radio_para *)&radiopara;
-   PhyRadioMsg bsm;
-#if BSM_FREAM_TEST
+    uint32_t now;
+    int32_t temp;
+    int r;
+    uint16_t id = get_moteid();
+    macfct *macpara = &mac;
+    PhyRadioMsg bsm;
    
-   if(radio->transmit_times >BSM_FRAME_TEST_TIMES)
-   {
-     report_radio_statistics();
-     return;
-     
-   }
+    
+#if BSM_FREAM_TEST
+    PRINTF("send_time_count %d\r\n",(*(uint16_t *)ptr));
+    send_time_count--;
+    if(!send_time_count)
+    {
+        report_radio_statistics();
+        return;
+    }
 #endif
+    
    
    frame_init(&bsm,FRAME_TYPE_BSM);
    NETSTACK_RADIO.send(&bsm,sizeof(PhyRadioMsg));
    //»ñÈ¡ÏÖÔÚÊ±ÖÓ
    now = RTIMER_NOW();
    //»ñÈ¡ÏÂÒ»´Î·¢ËÍÊ±ÖÓ
-   temp = PEROID_LENGTH-(now%PEROID_LENGTH)+(id%NR_SLOTS)*SLOT_LENGTH +macpara->time_offset_period_align;
+   temp = PEROID_LENGTH-(now+macpara->time_offset_period_align)%PEROID_LENGTH+(id%NR_SLOTS)*SLOT_LENGTH ;
    //¶¨Ê± ´«µÝ»Øµ÷º¯Êý
    r=rtimer_set(&rt1, (rtimer_clock_t)(now+temp+GUARD_PERIOD),1,(rtimer_callback_t)bsm_transmit_tdma,NULL);
    
-   PRINTF("tdma send %d %d %d %d \r\n",temp,now,GUARD_PERIOD,SLOT_LENGTH);
+   PRINTF("tdma send %d %d %d %d %d \r\n",temp,now,GUARD_PERIOD,SLOT_LENGTH,
+                                                    macpara->time_offset_period_align
+                                                     );
    if(r){
       PRINTF("rtimer error\r\n");
     }
@@ -260,7 +281,7 @@ void time_synch_gps(void *ptr)
     {
       PRINTF("time_synch_gps %d\r\n",(*(uint8_t *)ptr));
       time_to_synch=(*(uint8_t *)ptr)--;
-      if(time_to_synch==0)
+      if(!time_to_synch)
           return;
     }
 

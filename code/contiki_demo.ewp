@@ -2973,6 +2973,9 @@
             <name>$PROJ_DIR$\User\usr_framer.c</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\User\usr_framer.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\User\usr_mac.c</name>
         </file>
         <file>
