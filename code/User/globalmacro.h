@@ -47,3 +47,5 @@
 #define PACKET_INTO_REPORT_TIME         50
 //TDMA 不使能的时候使用csma_ca 使能时候关闭csma_ca
 #define TDMA_BSM_ENABLE                 1
+
+#define BSM_SEND_TOTAL_TIME                          

@@ -74,7 +74,8 @@ radio_para radiopara;
 ** Created by:          ’≈–£‘¥
 ** Created Date:        2018-04-07
 *********************************************************************************************************/
-void radio_para_init(){
+void radio_para_init()
+{
     radiopara.shortaddr = get_moteid();
     radiopara.pan_id = get_cluster_name(radiopara.shortaddr);
     radiopara.max_frame_retrise = DEFAULT_MAX_FRAME_RETRIES;

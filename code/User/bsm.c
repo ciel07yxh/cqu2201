@@ -60,7 +60,8 @@ uint16_t send_time_count = BSM_FRAME_TEST_TIMES;
 ** Created Date:        2018-04-09
 *********************************************************************************************************/
 
-void pacet_info_statistics_init(){
+void pacet_info_statistics_init()
+{
     route_info *routeInfo = (route_info *)&__routeinfo ;
     routeInfo->AliveNodesCount=1;
     ctimer_set(&ct2, PACKET_INTO_REPORT_TIME*CLOCK_SECOND,report_node_info, NULL); 
@@ -105,7 +106,8 @@ uint8_t CheckIfExist(uint16_t addr)//≈–∂œ «∑ÒID «∑Ò¥Ê‘⁄
 	uint8_t exist = FALSE;
 	uint8_t j;
         //∂‘À˘”–Ω⁄µ„±È¿˙
-	for(j = 0; j <= routeInfo->AliveNodesCount; j++){
+	for(j = 0; j <= routeInfo->AliveNodesCount; j++)
+        {
 	
 		if((routeInfo->node_info+j)->source_addr == addr)
 		{
@@ -126,12 +128,12 @@ return exist;
 *********************************************************************************************************/
 void addAliveNode(uint16_t addr)//ÃÌº”IDΩ¯∫Ú—°¡–±Ì
 {
-  route_info *routeInfo = (route_info *)&__routeinfo ;
+    route_info *routeInfo = (route_info *)&__routeinfo ;
   
-  //PRINTF("addAliveNodeInfo %d %d\r\n",addr,routeInfo->AliveNodesCount);
+    //PRINTF("addAliveNodeInfo %d %d\r\n",addr,routeInfo->AliveNodesCount);
   
-  (routeInfo->node_info+routeInfo->AliveNodesCount)->source_addr = addr; //ÃÌº”µÿ÷∑
-  routeInfo->AliveNodesCount++;
+    (routeInfo->node_info+routeInfo->AliveNodesCount)->source_addr = addr; //ÃÌº”µÿ÷∑
+     routeInfo->AliveNodesCount++;
 }
 
 /*********************************************************************************************************
@@ -149,7 +151,8 @@ void addAliveNodeInfo(uint16_t pos,uint16_t addr,int16_t delay)//ÃÌº”IDΩ¯∫Ú—°¡–±
   
   //PRINTF("addAliveNodeInfo %d %d\r\n",pos,addr);
   
-  if((routeInfo->node_info+pos)->source_addr = addr){
+  if((routeInfo->node_info+pos)->source_addr = addr)
+  {
     (routeInfo->node_info+pos)->receive_packet++;
     (routeInfo->node_info+pos)->delay_sum+=delay;
   }
@@ -168,7 +171,8 @@ void addAliveNodeInfo(uint16_t pos,uint16_t addr,int16_t delay)//ÃÌº”IDΩ¯∫Ú—°¡–±
 ** Created Date:        2018-04-09
 *********************************************************************************************************/
 
-void report_node_info(){
+void report_node_info()
+{
   route_info *routeInfo = (route_info *)&__routeinfo;
   uint8_t i;
   
@@ -179,7 +183,7 @@ void report_node_info(){
     uart_printf("info %d recivecout %d delay %d\r\n",(routeInfo->node_info+i)->source_addr,
                                                 (routeInfo->node_info+i)->receive_packet,
                                                   (routeInfo->node_info+i)->delay);
-    }
+   }
 
 }
 
@@ -194,7 +198,8 @@ void report_node_info(){
 ** Created Date:        2018-04-09
 *********************************************************************************************************/
 
-void bsm_transmit_csma_ca(void *ptr){
+void bsm_transmit_csma_ca(void *ptr)
+{
     static struct ctimer ct3;
     PhyRadioMsg bsm;
       
@@ -224,7 +229,8 @@ void bsm_transmit_csma_ca(void *ptr){
 ** Created Date:        2018-04-09
 *********************************************************************************************************/
 
-void bsm_transmit_tdma(void *ptr){
+void bsm_transmit_tdma(void *ptr)
+{
   
     uint32_t now;
     int32_t temp;

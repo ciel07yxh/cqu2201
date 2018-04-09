@@ -47,7 +47,8 @@ get_synch_time
 *********************************************************************************************************/
 
 
-rtimer_clock_t get_synch_time(macfct *macpara){
+rtimer_clock_t get_synch_time(macfct *macpara)
+{
   return rtimer_arch_now()-macpara->time_offset;
 } 
 
@@ -62,13 +63,14 @@ rtimer_clock_t get_synch_time(macfct *macpara){
 *********************************************************************************************************/
 
 
-void timeoffset_calc(macfct *macpara,uint32_t time){
+void timeoffset_calc(macfct *macpara,uint32_t time)
+{
   macpara->time_offset = RTIMER_NOW() -time;
   //对周期取与
   macpara->time_offset_period_align=macpara->time_offset%PEROID_LENGTH;
   //若果为负数
   if(macpara->time_offset_period_align<0)
-    macpara->time_offset_period_align+=PEROID_LENGTH;
+      macpara->time_offset_period_align+=PEROID_LENGTH;
 } 
 
 /*********************************************************************************************************
@@ -81,7 +83,8 @@ void timeoffset_calc(macfct *macpara,uint32_t time){
 ** Created Date:        2018-04-07
 *********************************************************************************************************/
 
-void frame_init(PhyRadioMsg * msg,uint16_t frametype){
+void frame_init(PhyRadioMsg * msg,uint16_t frametype)
+{
       radio_para *radio = (radio_para *)&radiopara;
       macfct *macpara = &mac;
       msg->fcfl=0x61;
@@ -102,7 +105,7 @@ void frame_init(PhyRadioMsg * msg,uint16_t frametype){
       msg->time_stamp=macpara->get_synch_time(macpara);
       
       //广播帧设置Frame Control Field 以及目的地址
-      if(frametype == FRAME_TYPE_BSM ) 
+      if(frametype == FRAME_TYPE_BSM) 
       {
         msg->fcfl = 0x41;   
         msg->des_addrl = 0xFF;

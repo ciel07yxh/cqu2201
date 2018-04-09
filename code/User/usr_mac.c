@@ -78,7 +78,8 @@ void usr_mac_init(void)
 ** Created Date:        2018-04-07
 *********************************************************************************************************/
 
-void packet_input_arch(void){
+void packet_input_arch(void)
+{
     macfct *macpara = &mac;
     radio_para *radio = (radio_para *)&radiopara;
     
