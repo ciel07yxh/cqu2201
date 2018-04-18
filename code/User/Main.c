@@ -23,11 +23,11 @@
 **
 *********************************************************************************************************/
 #include "includes.h"
-
+#include "P2P.h"
 /*********************************************************************************************************
 **  全局变量定义
 *********************************************************************************************************/
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include "runtime/uartstdio.h"
 #define PRINTF(...)   uart_printf(__VA_ARGS__)
@@ -39,20 +39,6 @@
 **  外部函数声明
 *********************************************************************************************************/
 PROCESS_NAME(udp_client_process);
-#define PAN_ID        0x1420//0x2007  //  PAN_ID号
-#define PAN_L        (PAN_ID & 0x00FF)       //  PAN_ID低8位
-#define PAN_H        ((PAN_ID & 0xFF00) >> 8)        //  PAN_ID高8位
-#define ADD_SRC        0xAABB
-#define ADD_SRC_L    (ADD_SRC & 0x00FF)
-#define ADD_SRC_H    ((ADD_SRC & 0xFF00) >> 8)
-#define ADD_DEST         0x0203
-#define ADD_DEST_L    (ADD_DEST & 0x00FF)
-#define ADD_DEST_H  ((ADD_DEST & 0xFF00) >> 8)
-
-uint8_t ieee_addr_64[8]={0,0,0,0,0,0,0,0};
-
-static uint8_t txbuf[23] = { 0x61, 0x88, 0, PAN_L, PAN_H,0xff, 0xff, ADD_SRC_L, ADD_SRC_H,
-0, 'e', 'l', 'l', 'o', ' ', '8', '0', '2', '.', '1', '5', '.', '5'};
 
 /*********************************************************************************************************
 **  内部函数声明
@@ -69,9 +55,9 @@ PROCESS_THREAD(led_process, ev, data)
 
     etimer_set(&et, CLOCK_SECOND);
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-    NETSTACK_RADIO.send(txbuf,23);
-    //sys_led_toggle(1);
-    PRINTF("The moteid is %d \r\n",get_moteid());
+    sys_led_toggle(0);
+    sys_led_toggle(1);
+    //PRINTF("The moteid is %d \r\n",get_moteid());
   }
    PROCESS_END();
 }
@@ -119,9 +105,18 @@ int main (void)
     procinit_init();
     process_start(&etimer_process, NULL);
     ctimer_init();
+    /****************自定義初始化************/
     // 初始化网络协议栈
     //contiki_net_init();
-    userinit();
+    //只初始化物理层
+      NETSTACK_RADIO.init();
+      NETSTACK_RADIO.on();
+      //初始化moteid
+      moteid_init();
+      p2p_frame_send(NULL);
+
+     /*****************************************/    
+        
     energest_init();
     ENERGEST_ON(ENERGEST_TYPE_CPU);
 

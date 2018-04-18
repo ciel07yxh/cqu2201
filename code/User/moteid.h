@@ -39,7 +39,7 @@
 extern uint16_t moteid;
 void moteid_init(void);
 uint16_t get_moteid(void);
-
+uint16_t get_cluster_name(uint16_t moteid);
 
 #endif
 /*********************************************************************************************************
