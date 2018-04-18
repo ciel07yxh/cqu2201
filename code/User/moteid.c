@@ -11,3 +11,7 @@ uint16_t get_moteid(void)
 {
   return moteid;
 }
+uint16_t get_cluster_name(uint16_t moteid)
+{
+  return (((moteid-1)/5)+1);
+}
