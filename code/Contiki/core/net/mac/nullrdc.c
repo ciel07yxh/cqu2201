@@ -361,7 +361,11 @@ const struct rdc_driver nullrdc_driver = {
   init,
   send_packet,
   send_list,
+#if YXH_RECV
+  yxh_frame802154_parse,
+#else  
   packet_input,
+#endif
   on,
   off,
   channel_check_interval,

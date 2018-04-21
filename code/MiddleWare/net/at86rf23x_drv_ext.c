@@ -26,6 +26,8 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "contiki-conf.h"
+#include "P2P.h"
+#include "moteid.h"
 
 #include "services/sys_services.h"
 
@@ -560,6 +562,28 @@ static int init(void)
    trx_state_set(STATE_FORCE_TRX_OFF);
    BUSYWAIT_UNTIL(0, RTIMER_SECOND * TIME_PLL_ON_TO_TRX_OFF / 1000000);
    
+       //自动ACK配置    在TRX_OFF 状态下才能成功设置地址
+   /*
+    硬件地址过滤同时对 PANID 以及 目的地址 （短地址和长地址）进行判断
+     根据收到的帧结构进行判定
+      四种情况：
+                PANID           DES_ADDR        Result
+                Match           Match           ACK
+                Match           Un-Match        NO ACK
+                Un-Match        Match           NO ACK
+                Un-Match        Un-Match        NO ACK
+    */
+   
+    trx_reg_write(RG_PAN_ID_0, (get_cluster_name(get_moteid()) & 0x00FF));
+    trx_reg_write(RG_PAN_ID_1, ((get_cluster_name(get_moteid()) >> 8) & 0x00FF));
+    trx_reg_write(RG_SHORT_ADDR_0,get_moteid() & 0x00ff);
+    trx_reg_write(RG_SHORT_ADDR_1, (get_moteid() >> 8) & 0x00ff);
+    
+    trx_bit_write(SR_AACK_SET_PD, 0);
+   
+   
+   
+   
     /*
     ** Step 4, 读射频芯片ID
     */
@@ -671,7 +695,7 @@ static int init(void)
     ** Step 12, 接受滤波配置
     */
     trx_bit_write(SR_AACK_FVN_MODE, 2);
-    trx_bit_write(SR_AACK_PROM_MODE, 1);
+    trx_bit_write(SR_AACK_PROM_MODE, 0);
     trx_bit_write(SR_AACK_I_AM_COORD, 0);
     trx_bit_write(SR_AACK_UPLD_RES_FT, 0);
     trx_bit_write(SR_AACK_FLTR_RES_FT, 0);

@@ -28,8 +28,11 @@
 #define FRAME802154_SHORTADDRMODE   (0x02)           
 #define FRAME802154_LONGADDRMODE    (0x03)
 
-#define DESR_ADDR    (0x06)                //choose the destination address
+#define DEST_ADDR    (0x15)                //choose the destination address  no.21
+#define SRC_ADDR    (0x11)                //choose the destination address   no.17
+//#define SHORTADDRMODE                (0x02)
 
+#define YXH_RECV    1
 /*********************************************************************************************************
 **  Define global variaty
 *********************************************************************************************************/
@@ -91,9 +94,8 @@ void frame_para_init();         //init the parameters used in creating the frame
 int yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf);
 void p2p_frame_send(void *ptr);
 
-
+void yxh_frame802154_parse(void);
 //int frame802154_hdrlen(frame802154_t *p);
-//int frame802154_parse(uint8_t *data, int length, frame802154_t *pf);
 //void frame802154_recieve();
 
 

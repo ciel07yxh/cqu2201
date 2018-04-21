@@ -35,7 +35,8 @@
 #define PRINTF(...)
 #endif
 
-    yxh_frame802154_t initframe;
+    yxh_frame802154_t p2p_frame;
+    yxh_frame802154_t rec_frame;
     uint8_t payload_to_send[2]={1,2};
 /*********************************************************************************************************
 ** Function name:       addr_len
@@ -100,7 +101,7 @@ field_len(yxh_frame802154_t *p, field_length_t *flen)
 
 
 /*********************************************************************************************************
-** Function name:       frame802154_create
+** Function name:       yxh_frame802154_create
 ** Descriptions:        Creates a frame for transmission over the air
 ** input parameters:    frame802154_t *p, uint8_t *buf
 ** output parameters:   pose: the total length (Byte) of the frame except payload CRC
@@ -152,8 +153,8 @@ yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf)
   }
 
   /* Destination address */
-  for(c = flen.dest_addr_len; c > 0; c--) {
-    buf[pos++] = p->dest_addr[c - 1];
+  for(c = 0;c<flen.dest_addr_len;c++) {
+    buf[pos++] = p->dest_addr[c];
   }
 
   /* Source PAN ID */
@@ -163,88 +164,218 @@ yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf)
   }
 
   /* Source address */
-  for(c = flen.src_addr_len; c > 0; c--) {
-    buf[pos++] = p->src_addr[c - 1];
+  for(c = 0;c<flen.src_addr_len;c++) {
+    buf[pos++] = p->src_addr[c];
   }
-  for(c =initframe.payload_len; c > 0; c--) {
-    buf[pos++] = p->src_addr[c - 1];
+  
+  for(c = 0;c<p2p_frame.payload_len;c++) {
+    buf[pos++] = p->payload[c];
   }
   return (int)pos;
 }
 
 /*********************************************************************************************************
-** Function name:       frame802154_parse
-** Descriptions:        Parses an input frame
-** input parameters:    uint8_t *data, int len, frame802154_t *pf
-** output parameters:   
+** Function name:       frame_para_init
+** Descriptions:        Init the parameters of the frame
+** input parameters:    none
+** output parameters:   none
 ** Returned value:      0
 ** Created by:          Xiaohan Y
 ** Created Date:        2018-04-11
+*********************************************************************************************************/
+void frame_para_init(void)
+{
+    //init the fcf
+    p2p_frame.fcf.frame_type=0x01;
+    p2p_frame.fcf.security_enabled=0x00;
+    p2p_frame.fcf.frame_pending=0x00;
+    p2p_frame.fcf.ack_required=0x01;
+    //p2p_frame.panid_compression=;                  //this is to be determined in field_flen()
+    p2p_frame.fcf.dest_addr_mode=FRAME802154_SHORTADDRMODE;                      //short address
+    p2p_frame.fcf.frame_version=0x01;
+    p2p_frame.fcf.src_addr_mode=FRAME802154_SHORTADDRMODE;                        //short address
+    //init the seq
+    p2p_frame.seq=0x00;
+    //init the PAN id
+    p2p_frame.dest_pid=get_cluster_name(DEST_ADDR);
+
+    p2p_frame.src_pid=get_cluster_name(p2p_frame.src_addr[1]);
+    //init the Adress
+    p2p_frame.dest_addr[0]=DEST_ADDR;                             //chose No.1 node to receive
+    p2p_frame.src_addr[0]=SRC_ADDR;  
+    p2p_frame.payload=payload_to_send;
+    p2p_frame.payload_len=sizeof(payload_to_send);
+}
+
+/*********************************************************************************************************
+** Function name:       p2p_frame_send
+** Descriptions:        send the frame
+** input parameters:    null
+** output parameters:   none
+** Returned value:      0
+** Created by:          Xiaohan Y
+** Created Date:        2018-04-11
+*********************************************************************************************************/
+void p2p_frame_send(void *ptr)
+{
+    static struct ctimer ct;
+
+    uint8_t p2p_buf[100];
+    //PRINTF("aaa");
+   //initialize the p2p frame parameters
+    frame_para_init();
+    //yxh_frame802154_t p2p_frame=p2p_frame;
+    //Initialize the p2p frame, put the structure value into a buffer
+      int sendlength = yxh_frame802154_create(&p2p_frame, p2p_buf);
+      //Send p2p frame
+     int state = NETSTACK_RADIO.send(p2p_buf, sendlength);  
+     //print send frame and result(state)
+     PRINTF("The send frame is:");
+     for(uint8_t a=0;a<sendlength;a++)
+     {
+        PRINTF("%x ",p2p_buf[a]);
+     }
+     PRINTF("\r\n");   
+     //PRINTF("The frame is send from node %d\r\n",);
+     PRINTF("The send state is %d\r\n",state);                  //  2a¨º? state = enSendState = RADIO_TX_OK=0; 
+     ctimer_set(&ct,CLOCK_SECOND/10,p2p_frame_send,NULL);
+}
+
+/*********************************************************************************************************
+** Function name:       yxh_frame_parse
+** Descriptions:        Parses an input frame
+** input parameters:    uint8_t *data, int len, yxh_frame802154_t *pf
+** output parameters:   
+** Returned value:      0
+** Created by:          Xiaohan Y
+** Created Date:        2018-04-18
 *********************************************************************************************************/
 
 /*----------------------------------------------------------------------------*/
 /**
  *   \brief Parses an input frame.  Scans the input frame to find each
  *   section, and stores the information of each section in a
- *   frame802154_t structure.
+ *   yxh_frame_t structure.
  *
  *   \param data The input data from the radio chip.
  *   \param len The size of the input data
- *   \param pf The frame802154_t struct to store the parsed frame information.
+ *   \param pf The yxh_frame_t struct to store the parsed frame information.
  */
-
-
-void frame_para_init(void)
+void yxh_frame802154_parse(void)
 {
-    //init the fcf
-    initframe.fcf.frame_type=0x01;
-    initframe.fcf.security_enabled=0x00;
-    initframe.fcf.frame_pending=0x01;
-    initframe.fcf.ack_required=0x00;
-    //initframe.panid_compression=;                  //this is to be determined in field_flen()
-    initframe.fcf.dest_addr_mode=FRAME802154_SHORTADDRMODE;                      //short address
-    initframe.fcf.frame_version=0x01;
-    initframe.fcf.src_addr_mode=FRAME802154_SHORTADDRMODE;                        //short address
-    //init the seq
-    initframe.seq=0x00;
-    //init the PAN id
-    initframe.dest_pid=get_cluster_name(DESR_ADDR);
-
-    initframe.src_pid=get_cluster_name(initframe.src_addr[1]);
-    //init the Adress
-    initframe.dest_addr[0]=DESR_ADDR;                             //chose No.1 node to receive
-    initframe.src_addr[0]=get_moteid();  
-    initframe.payload=payload_to_send;
-    initframe.payload_len=sizeof(payload_to_send);
-}
-
-
-
-void p2p_frame_send(void *ptr)
-{
-    static struct ctimer ct;
-    yxh_frame802154_t* p2p_frame=(yxh_frame802154_t*)&initframe;
-    uint8_t p2p_buf[100];
-    //PRINTF("aaa");
-   //initialize the p2p frame parameters
-    frame_para_init();
-
-    //Initialize the p2p frame, put the structure value into a buffer
-      int sendlength = yxh_frame802154_create(p2p_frame, p2p_buf);
-      //Send p2p frame
-     int state = NETSTACK_RADIO.send(&p2p_frame, sendlength);  
-     //print send frame and result(state)
-     PRINTF("The send frame is:");
-     for(uint8_t a=0;a<sizeof(p2p_buf);a++)
+  
+  uint8_t *p;                   
+  yxh_frame802154_fcf_t fcf;
+  int c;
+  
+  uint8_t *data = packetbuf_dataptr();
+  int len = (int)packetbuf_datalen();
+  yxh_frame802154_t *pf = &rec_frame;
+    
+  if(len < 3) {
+    return ;
+  }
+   for(uint8_t a=0;a<len;a++)
      {
-        PRINTF("%d",p2p_buf[a]);
+        PRINTF("%x ",data[a]);
      }
-     PRINTF("\r\n");
-     //PRINTF("The frame is send from node %d\r\n",);
-     //PRINTF("The send frame is %d\r\n",*p2p_buf);
-     //PRINTF("The send astate is %d\r\n",state);
-     ctimer_set(&ct,CLOCK_SECOND/10,p2p_frame_send,NULL);
+    PRINTF("\r\n");   
+  
+  p = data;
+
+  /* decode the FCF */
+  fcf.frame_type = p[0] & 7;
+  fcf.security_enabled = (p[0] >> 3) & 1;
+  fcf.frame_pending = (p[0] >> 4) & 1;
+  fcf.ack_required = (p[0] >> 5) & 1;
+  fcf.panid_compression = (p[0] >> 6) & 1;
+
+  fcf.dest_addr_mode = (p[1] >> 2) & 3;
+  fcf.frame_version = (p[1] >> 4) & 3;
+  fcf.src_addr_mode = (p[1] >> 6) & 3;
+
+  /* copy fcf and seqNum */
+  memcpy(&pf->fcf, &fcf, sizeof(frame802154_fcf_t));
+  pf->seq = p[2];
+  p += 3;                             /* Skip first three bytes */
+
+  /* Destination address, if any */
+  if(fcf.dest_addr_mode) {
+    /* Destination PAN */
+    pf->dest_pid = p[0] + (p[1] << 8);
+    p += 2;
+    
+    /* Destination address */
+/*     l = addr_len(fcf.dest_addr_mode); */
+/*     for(c = 0; c < l; c++) { */
+/*       pf->dest_addr.u8[c] = p[l - c - 1]; */
+/*     } */
+/*     p += l; */
+    if(fcf.dest_addr_mode == FRAME802154_SHORTADDRMODE) {
+      linkaddr_copy((linkaddr_t *)&(pf->dest_addr), &linkaddr_null);
+      pf->dest_addr[0] = p[0];
+      pf->dest_addr[1] = p[1];
+      p += 2;
+    } else if(fcf.dest_addr_mode == FRAME802154_LONGADDRMODE) {
+      for(c = 0; c < 8; c++) {
+        pf->dest_addr[c] = p[c];
+      }
+      p += 8;
+    }
+  } else {
+    linkaddr_copy((linkaddr_t *)&(pf->dest_addr), &linkaddr_null);
+    pf->dest_pid = 0;
+  }
+  if(pf->dest_addr[0] != get_moteid() || pf->dest_pid != get_cluster_name(DEST_ADDR) )
+  {
+    PRINTF("Wrong!\r\n");
+    return;
+  }
+  
+  /* Source address, if any */
+  if(fcf.src_addr_mode) {
+    /* Source PAN */
+    if(!fcf.panid_compression) {
+      pf->src_pid = p[0] + (p[1] << 8);
+      p += 2;
+    } else {
+      pf->src_pid = pf->dest_pid;
+    }
+
+    /* Source address */
+/*     l = addr_len(fcf.src_addr_mode); */
+/*     for(c = 0; c < l; c++) { */
+/*       pf->src_addr.u8[c] = p[l - c - 1]; */
+/*     } */
+/*     p += l; */
+    if(fcf.src_addr_mode == FRAME802154_SHORTADDRMODE) {
+      linkaddr_copy((linkaddr_t *)&(pf->src_addr), &linkaddr_null);
+      pf->src_addr[0] = p[0];
+      pf->src_addr[1] = p[1];
+      p += 2;
+    } else if(fcf.src_addr_mode == FRAME802154_LONGADDRMODE) {
+      for(c = 0; c < 8; c++) {
+        pf->src_addr[c] = p[c];
+      }
+      p += 8;
+    }
+  } else {
+    linkaddr_copy((linkaddr_t *)&(pf->src_addr), &linkaddr_null);
+    pf->src_pid = 0;
+  }
+
+  /* header length */
+  c = p - data;            //  ?¦Ì?a?a????¨ºy    
+  /* payload length */
+  pf->payload_len = (len - c);
+  /* payload */
+  pf->payload = p;
+  PRINTF("Received!\r\n");
 }
+
+
+
+
 
 
 /*
