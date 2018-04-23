@@ -263,7 +263,6 @@ void p2p_frame_send(void *ptr)
  */
 void yxh_frame802154_parse(void)
 {
-  
   uint8_t *p;                   
   yxh_frame802154_fcf_t fcf;
   int c;
@@ -275,6 +274,8 @@ void yxh_frame802154_parse(void)
   if(len < 3) {
     return ;
   }
+  
+  uart_printf("The received frame is: ");
    for(uint8_t a=0;a<len;a++)
      {
         PRINTF("%x ",data[a]);

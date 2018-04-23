@@ -45,6 +45,7 @@
 #include "net/netstack.h"
 #include "net/rime/rimestats.h"
 #include <string.h>
+#include "P2P.h"
 
 #if CONTIKI_TARGET_COOJA
 #include "lib/simEnvChange.h"

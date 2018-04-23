@@ -28,7 +28,7 @@
 #define FRAME802154_SHORTADDRMODE   (0x02)           
 #define FRAME802154_LONGADDRMODE    (0x03)
 
-#define DEST_ADDR    (0x15)                //choose the destination address  no.21
+#define DEST_ADDR    (0x13)                //choose the destination address  no.21
 #define SRC_ADDR    (0x11)                //choose the destination address   no.17
 //#define SHORTADDRMODE                (0x02)
 

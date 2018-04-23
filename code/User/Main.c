@@ -113,7 +113,9 @@ int main (void)
       NETSTACK_RADIO.on();
       //≥ı ºªØmoteid
       moteid_init();
+      if(get_moteid()==SRC_ADDR){
       p2p_frame_send(NULL);
+      }
 
      /*****************************************/    
         

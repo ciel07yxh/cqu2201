@@ -38,8 +38,7 @@
 #if DEBUG
 #include "runtime/uartstdio.h"
 #include <stdio.h>
-//#define PRINTF(...)   uart_printf(__VA_ARGS__)
-#define PRINTF(...)     printf(__VA_ARGS__)
+#define PRINTF(...)   uart_printf(__VA_ARGS__)
 #else
 #define PRINTF(...)
 #endif
@@ -677,7 +676,7 @@ static int init(void)
     **  0xE --------->-12db            0xE --------->-12db
     **  0xF --------->-17db            0xF --------->-17db
     */
-     trx_bit_write(SR_TX_PWR, 0xF);
+     trx_bit_write(SR_TX_PWR, 0x5);
      PRINTF("The RF transmit power is setting with register value %d!\r\n", trx_bit_read(SR_TX_PWR));
    
     /*
