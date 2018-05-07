@@ -113,7 +113,9 @@ int main (void)
       NETSTACK_RADIO.on();
       //初始化moteid
       moteid_init();
-      if(get_moteid()==SRC_ADDR){
+               PRINTF("CCC");                           //为什么CD没有打印出来？
+      if(get_moteid() == SRC_ADDR){
+               PRINTF("DDD");
       p2p_frame_send(NULL);
       }
 

@@ -197,14 +197,14 @@ void frame_para_init(void)
     //init the seq
     p2p_frame.seq=0x00;
     //init the PAN id
-    p2p_frame.dest_pid=get_cluster_name(DEST_ADDR);
-
-    p2p_frame.src_pid=get_cluster_name(p2p_frame.src_addr[1]);
+    p2p_frame.dest_pid=get_cluster_name(get_moteid()+1);
+    p2p_frame.src_pid=get_cluster_name(get_moteid());
     //init the Adress
-    p2p_frame.dest_addr[0]=DEST_ADDR;                             //chose No.1 node to receive
-    p2p_frame.src_addr[0]=SRC_ADDR;  
+    p2p_frame.dest_addr[0]=get_moteid()+1;                             
+    p2p_frame.src_addr[0]=get_moteid();  
     p2p_frame.payload=payload_to_send;
     p2p_frame.payload_len=sizeof(payload_to_send);
+    if(p2p_frame.dest_addr[0] == DEST_ADDR){}
 }
 
 /*********************************************************************************************************
@@ -221,7 +221,6 @@ void p2p_frame_send(void *ptr)
     static struct ctimer ct;
 
     uint8_t p2p_buf[100];
-    //PRINTF("aaa");
    //initialize the p2p frame parameters
     frame_para_init();
     //yxh_frame802154_t p2p_frame=p2p_frame;
@@ -238,7 +237,10 @@ void p2p_frame_send(void *ptr)
      PRINTF("\r\n");   
      //PRINTF("The frame is send from node %d\r\n",);
      PRINTF("The send state is %d\r\n",state);                  //  2a¨º? state = enSendState = RADIO_TX_OK=0; 
+     if(state != 0)
+     {
      ctimer_set(&ct,CLOCK_SECOND/10,p2p_frame_send,NULL);
+     }
 }
 
 /*********************************************************************************************************
@@ -263,6 +265,7 @@ void p2p_frame_send(void *ptr)
  */
 void yxh_frame802154_parse(void)
 {
+  PRINTF("@");
   uint8_t *p;                   
   yxh_frame802154_fcf_t fcf;
   int c;
@@ -271,7 +274,7 @@ void yxh_frame802154_parse(void)
   int len = (int)packetbuf_datalen();
   yxh_frame802154_t *pf = &rec_frame;
     
-  if(len < 3) {
+  if(len <= 3) {
     return ;
   }
   
@@ -327,11 +330,14 @@ void yxh_frame802154_parse(void)
     linkaddr_copy((linkaddr_t *)&(pf->dest_addr), &linkaddr_null);
     pf->dest_pid = 0;
   }
-  if(pf->dest_addr[0] != get_moteid() || pf->dest_pid != get_cluster_name(DEST_ADDR) )
+  
+  /*
+  if(fcf.frame_type == 0x2 && len == 3)
   {
-    PRINTF("Wrong!\r\n");
+    PRINTF("ACK  received!\r\n");
     return;
   }
+  */
   
   /* Source address, if any */
   if(fcf.src_addr_mode) {
@@ -371,7 +377,13 @@ void yxh_frame802154_parse(void)
   pf->payload_len = (len - c);
   /* payload */
   pf->payload = p;
-  PRINTF("Received!\r\n");
+  PRINTF("Frame receiceved!\r\n");
+  if(get_moteid() == (uint16_t)DEST_ADDR)
+  {
+    PRINTF("Frame receiceved by destination node!\r\n");
+  }else{
+    p2p_frame_send(NULL);
+  }
 }
 
 

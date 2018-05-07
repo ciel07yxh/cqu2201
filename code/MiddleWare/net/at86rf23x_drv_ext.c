@@ -1086,6 +1086,7 @@ static void at86rf231_isr(void)
 {
    RF_IRQ_CLEAR();
    process_poll(&at86rf231_process);
+
 }
 
 /*********************************************************************************************************
@@ -1097,6 +1098,8 @@ static void at86rf231_isr(void)
 *********************************************************************************************************/
 PROCESS_THREAD(at86rf231_process, ev, data)
 {
+  
+
   //uint8 enSendState;
   uint8 u8IntStatus;
   uint8 u8Status;
@@ -1122,7 +1125,10 @@ PROCESS_THREAD(at86rf231_process, ev, data)
                   len = read(packetbuf_dataptr(), PACKETBUF_SIZE);
                   if(len > 0) {
                       packetbuf_set_datalen(len);
-                      NETSTACK_RDC.input();
+                       // if(get_moteid()!= SRC_ADDR)
+                        //{
+                                              NETSTACK_RDC.input();
+                       // }
                   }
                    bIsReceive = 0;
                }  else {
