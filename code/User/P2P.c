@@ -204,7 +204,7 @@ void frame_para_init(void)
     p2p_frame.src_addr[0]=get_moteid();  
     p2p_frame.payload=payload_to_send;
     p2p_frame.payload_len=sizeof(payload_to_send);
-    if(p2p_frame.dest_addr[0] == DEST_ADDR){}
+  //  if(p2p_frame.dest_addr[0] == DEST_ADDR){}
 }
 
 /*********************************************************************************************************
