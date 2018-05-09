@@ -28,11 +28,20 @@
 #define FRAME802154_SHORTADDRMODE   (0x02)           
 #define FRAME802154_LONGADDRMODE    (0x03)
 
-#define DEST_ADDR    (0x2C)                //choose the destination address  no.02
-#define SRC_ADDR    (0x29)                //choose the destination address   no.01
-//#define SHORTADDRMODE                (0x02)
+#define DEST_ADDR    (0x31)                //choose the destination address  no.02
+#define SRC_ADDR    (0x2e)                //choose the destination address   no.01
+#define TIME_SYNCH_NODE               0x32
+
+#define TIME_SYNCH_TIMES               3
+
+#define FRAME_TYPE_TIME_SYNCH   0x01
+#define FRAME_TYPE_P2P          0x02
+#define FRAME_TYPE_INTERF       0x03
 
 #define YXH_RECV    1
+
+#define BSM_FRE_HZ      10                              //BSM 10Hz
+#define PEROID_LENGTH   (RTIMER_SECOND/BSM_FRE_HZ)      //BSM 周期时间     
 /*********************************************************************************************************
 **  Define global variaty
 *********************************************************************************************************/
@@ -72,10 +81,20 @@ typedef struct {
   uint8_t src_addr[8];            /**< Source address */
   //frame802154_aux_hdr_t aux_hdr;  /**< Aux security header */             //  No Aux security header
   uint8_t *payload;               /**< Pointer to 802.15.4 payload */
+  uint8_t frame_seq;
+  uint32_t time_stamp;
+  uint8_t send_type;
   int payload_len;                /**< Length of payload field */         //  ??
 }yxh_frame802154_t;
 
-
+typedef struct time_para{
+        uint8_t  IsSyched;
+        uint32_t time_stamp;
+        int32_t  time_offset;
+        int32_t  time_offset_period_align;         //用于时间同步周期对齐
+        void (*timeoffset)(struct time_para *timepara,uint32_t time);
+        rtimer_clock_t (*get_synch_time)(struct time_para *timepara);
+} time_para;
 
 /**
  *  \brief Structure that contains the lengths of the various addressing and security fields
@@ -89,15 +108,17 @@ typedef struct {
   //uint8_t aux_sec_len;     /**<  Length (in bytes) of aux security header field */
 } field_length_t;
 
-void frame_para_init();         //init the parameters used in creating the frame and the operation machianism
+void frame_para_init(yxh_frame802154_t *p,uint8_t frame_type);//init the parameters used in creating the frame and the operation machianism
 //void peration_init();        //init the parameters used in the operation machianism
 int yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf);
-void p2p_frame_send(void *ptr);
+void yxh_frame_send(void *ptr);
 
 void yxh_frame802154_parse(void);
+rtimer_clock_t get_synch_time(time_para *timepara);
+void timeoffset_calc(time_para *timepara,uint32_t time);
 //int frame802154_hdrlen(frame802154_t *p);
 //void frame802154_recieve();
-
+void time_synch_gps(void *ptr);
 
 
 #endif /* __CONTIKI_CONF_H__ */

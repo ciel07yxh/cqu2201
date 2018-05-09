@@ -871,29 +871,22 @@ static int send(const void *payload, unsigned short payload_len)
   rf_wait_idle();
   PRINTF("The send over state is 0x%02X\r\n", trx_state_get());
   
-   // 处理发送中断
-    enSendState = trx_bit_read(SR_TRAC_STATUS);
-     if(radio_receive_on ==  1) {
-        // make to rx on state.
-        trx_state_set(STATE_RX_AACK_ON);
-     } else {
-        rf_reset_state_machine();
-     }
-     PRINTF("The sent over state is 0x%02X\r\n", trx_state_get());
-  
-     // 检查发送结果
-     if (enSendState == 1) {                //success, data pending from addressee
-          enSendState = RADIO_TX_OK;           //handle as ordinary success
-      }
-
-      if (enSendState == 3) {        //CSMA channel access failure
-          enSendState = RADIO_TX_COLLISION;
-      } else if (enSendState == 5) {        //Expected ACK, none received
-          enSendState = RADIO_TX_NOACK;
-      } else if (enSendState == 7) {        //Invalid (Can't happen since waited for idle above?)
-          enSendState = RADIO_TX_ERR;
-      } 
-   return enSendState;
+     enSendState = trx_bit_read(SR_TRAC_STATUS);
+                 PRINTF("The sent over state is 0x%02X\r\n", trx_state_get());
+                 
+                 // 检查发送结果
+                 if (enSendState == 1) {                //success, data pending from addressee
+                   enSendState = RADIO_TX_OK;           //handle as ordinary success
+                 }
+                 
+                 if (enSendState == 3) {        //CSMA channel access failure
+                   enSendState = RADIO_TX_COLLISION;
+                 } else if (enSendState == 5) {        //Expected ACK, none received
+                   enSendState = RADIO_TX_NOACK;
+                 } else if (enSendState == 7) {        //Invalid (Can't happen since waited for idle above?)
+                   enSendState = RADIO_TX_ERR;
+                 } 
+                 return enSendState;
 }
 
 /*********************************************************************************************************
@@ -1133,32 +1126,41 @@ PROCESS_THREAD(at86rf231_process, ev, data)
                    bIsReceive = 0;
                }  else {
                  // 处理发送中断
-    //             enSendState = trx_bit_read(SR_TRAC_STATUS);
-    //             if(radio_receive_on ==  1) {
-    //              // make to rx on state.
-    //                trx_state_set(STATE_RX_AACK_ON);
-    //                rf_wait_idle();
-    //             } else {
-    //                rf_reset_state_machine();
-    //             }
-    //  
-    //            // 检查发送结果
-    //              if (enSendState == 1) {                //success, data pending from addressee
-    //                enSendState = RADIO_TX_OK;           //handle as ordinary success
-    //             }
-    //
-    //             if (enSendState == 3) {        //CSMA channel access failure
-    //               enSendState = RADIO_TX_COLLISION;
-    //             } else if (enSendState == 5) {        //Expected ACK, none received
-    //               enSendState = RADIO_TX_NOACK;
-    //             } else if (enSendState == 7) {        //Invalid (Can't happen since waited for idle above?)
-    //               enSendState = RADIO_TX_ERR;
-    //             } 
+               
+                 if(radio_receive_on ==  1) {
+                   // make to rx on state.
+                   trx_state_set(STATE_RX_AACK_ON);
+                 } else {
+                   rf_reset_state_machine();
+                 }
+                 
+                 // 处理发送中断
+                 //             enSendState = trx_bit_read(SR_TRAC_STATUS);
+                 //             if(radio_receive_on ==  1) {
+                 //              // make to rx on state.
+                 //                trx_state_set(STATE_RX_AACK_ON);
+                 //                rf_wait_idle();
+                 //             } else {
+                 //                rf_reset_state_machine();
+                 //             }
+                 //  
+                 //            // 检查发送结果
+                 //              if (enSendState == 1) {                //success, data pending from addressee
+                 //                enSendState = RADIO_TX_OK;           //handle as ordinary success
+                 //             }
+                 //
+                 //             if (enSendState == 3) {        //CSMA channel access failure
+                 //               enSendState = RADIO_TX_COLLISION;
+                 //             } else if (enSendState == 5) {        //Expected ACK, none received
+                 //               enSendState = RADIO_TX_NOACK;
+                 //             } else if (enSendState == 7) {        //Invalid (Can't happen since waited for idle above?)
+                 //               enSendState = RADIO_TX_ERR;
+                 //             } 
                }
         }
-   // } while(RF_IRQ_STATE());
+        // } while(RF_IRQ_STATE());
   }
-
+  
   PROCESS_END();
 }
 
