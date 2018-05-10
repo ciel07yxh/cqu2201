@@ -15,7 +15,7 @@
 ** Descriptions:        The original version 
 **
 **--------------------------------------------------------------------------------------------------------
-** Modified by:
+** Modified by:   
 ** Modified date:
 ** Version:
 ** Description:
@@ -46,7 +46,7 @@
 
   time_para synch={
     0,
-    0,
+    //0,
     0,
     0,
   timeoffset_calc,
@@ -64,7 +64,7 @@
 
 rtimer_clock_t get_synch_time(time_para *timepara)
 {
-  return rtimer_arch_now()-timepara->time_offset;
+  return rtimer_arch_now() - timepara->time_offset;
 } 
 
 /*********************************************************************************************************
@@ -81,6 +81,7 @@ rtimer_clock_t get_synch_time(time_para *timepara)
 void timeoffset_calc(time_para *timepara,uint32_t time)
 {
   timepara->time_offset = RTIMER_NOW() -time;
+  PRINTF("The rtimer is: %d", RTIMER_NOW());
   //对周期取与
   timepara->time_offset_period_align=timepara->time_offset%PEROID_LENGTH;
   //若果为负数
@@ -115,7 +116,7 @@ addr_len(uint8_t mode)
 
 /*********************************************************************************************************
 ** Function name:       field_len
-** Descriptions:        determine the length of variable fields  
+** Descriptions:        determine the length of variable fields
 ** input parameters:    frame802154_t *p, field_length_t *flen
 ** output parameters:   none
 ** Returned value:      0
@@ -246,9 +247,11 @@ yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf)
 ** Created by:          Xiaohan Y
 ** Created Date:        2018-04-11
 *********************************************************************************************************/
-void frame_para_init(yxh_frame802154_t *p,uint8_t frame_type)
+void frame_para_init(yxh_frame802154_t *p,void *ftype)
 {
     time_para *timepara = & synch; 
+    //uint8_t *type = ftype;
+    
     //init the fcf
     p->fcf.frame_type=0x01;
     p->fcf.security_enabled=0x00;
@@ -268,25 +271,29 @@ void frame_para_init(yxh_frame802154_t *p,uint8_t frame_type)
     p->src_addr[0]=get_moteid();
     p->src_addr[1]=0x00;
     
-    p->time_stamp = timepara->get_synch_time(timepara);
+    
     
     p->payload=payload_to_send;
     p->payload_len=sizeof(payload_to_send);
   //  if(p2p_frame.dest_addr[0] == DEST_ADDR){}
-     if(frame_type ==FRAME_TYPE_P2P )
+
+     if(*((uint8_t*)ftype) == FRAME_TYPE_P2P )
      {
        p->dest_pid=get_cluster_name(get_moteid()+1);
        p->dest_addr[0]=get_moteid()+1;  
        p->dest_addr[1]= 0x00;
-     } else if(frame_type ==FRAME_TYPE_TIME_SYNCH ) 
-      {
+           // PRINTF("dest addr: %x , dest panid: %x", p->dest_addr[0], p->dest_pid);
+     } else if(*((uint8_t*)ftype) ==FRAME_TYPE_TIME_SYNCH ) 
+     {
        p->dest_pid = 0xFFFF;
        p->dest_addr[0] = 0xFF;
        p->dest_addr[1] = 0xFF;
-      }
-    p->frame_seq = frame_sequence++;
-    p->time_stamp = get_synch_time(timepara);
-    p->send_type = frame_type;
+     }
+     p->frame_seq = frame_sequence++;
+     p->time_stamp = timepara->get_synch_time(timepara);
+     p->send_type = *((uint8_t*)ftype);
+     //PRINTF("send_type : %x \r\n", *((uint8_t *)ftype));
+   //  PRINTF("dest addr: %x , dest panid: %x", p->dest_addr[0], p->dest_pid);
     
 }
 
@@ -299,16 +306,24 @@ void frame_para_init(yxh_frame802154_t *p,uint8_t frame_type)
 ** Created by:          Xiaohan Y
 ** Created Date:        2018-04-11
 *********************************************************************************************************/
-void yxh_frame_send(void *ptr)
+void yxh_frame_send(void * type)
 {
+ // PRINTF("type : %x \r\n", *((uint8_t *)type));
     static struct ctimer ct;
+    yxh_frame802154_t *yxh_frame = &frame_to_send;
+    //uint8_t ftype = &type;
 
     uint8_t frame_buf[100];
    //initialize the p2p frame parameters
-    //frame_para_init();
+    frame_para_init(yxh_frame,type);
+   // PRINTF("dest addr: %x ", yxh_frame->dest_addr[0]);
+    
     //yxh_frame802154_t p2p_frame=p2p_frame;
     //Initialize the p2p frame, put the structure value into a buffer
-      int sendlength = yxh_frame802154_create(&frame_to_send, frame_buf);
+      int sendlength = yxh_frame802154_create(yxh_frame, frame_buf);
+      
+   // PRINTF("dest addr: %x ", yxh_frame->dest_addr[0]);
+    
       //Send p2p frame
      int state = NETSTACK_RADIO.send(frame_buf, sendlength); 
 
@@ -324,9 +339,21 @@ void yxh_frame_send(void *ptr)
        return;
 
      PRINTF("The send state is %d\r\n",state);                  //   state = enSendState = RADIO_TX_OK=0; 
+     
+    //ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send,NULL);
+     
+     /*
      if(state != 0)
      {
      ctimer_set(&ct,CLOCK_SECOND/10,yxh_frame_send,NULL);
+     }
+     */
+     
+     if(get_moteid() == SRC_ADDR)
+     {
+     //ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send,NULL);
+     static uint8_t type = FRAME_TYPE_P2P;
+     ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send, (void*)&type); 
      }
 }
 
@@ -463,7 +490,7 @@ void yxh_frame802154_parse(void)
     pf->frame_seq = p[0];
     p++;
     
-    pf->time_stamp = p[3] | p[2] | p[1] | p[0];
+    pf->time_stamp = p[0] | p[1] | p[2] | p[3];
     p += 4;
     
     pf->send_type = p[0];
@@ -490,32 +517,7 @@ void yxh_frame802154_parse(void)
       }
       timesynch->IsSyched = true;
       
-      //打印接收到的帧
-      uart_printf("The received frame is: ");
-      for(uint8_t a=0;a<len;a++)
-      {
-        PRINTF("%x ",data[a]);
-      }
-      PRINTF("\r\n");      
-      
-      PRINTF("Time synchronized!\r\n");
-      //计算时间偏置
-      timesynch->timeoffset(timesynch,timesynch->time_stamp);
-      PRINTF("time-offset is %d the time is  %d \r\n",synch.time_offset,timesynch->get_synch_time(timesynch));
-      //源节点进行时间同步后，经过5秒的时间开始发P2P帧(undone)
-      if(get_moteid() == SRC_ADDR)
-      {
-        yxh_frame802154_t p2p_frame;
-        frame_para_init(&p2p_frame,FRAME_TYPE_P2P);
-        frame_to_send = p2p_frame;
-        ctimer_set(&ct1,5*CLOCK_SECOND,yxh_frame_send, NULL); 
-        //ctimer_set(&ct2,5*CLOCK_SECOND,yxh_frame_send, ptr); 
-      }
-      return;
-    
-    
-  case FRAME_TYPE_P2P:
-    
+    /*
     //打印接收到的帧
     uart_printf("The received frame is: ");
     for(uint8_t a=0;a<len;a++)
@@ -523,6 +525,40 @@ void yxh_frame802154_parse(void)
       PRINTF("%x ",data[a]);
     }
     PRINTF("\r\n");   
+    */
+      PRINTF("Time synchronized!\r\n");
+      //计算时间偏置
+      timesynch->timeoffset(timesynch,pf->time_stamp);                  //计算出接收节点的time_stamp 和time_offset_period_align值
+      PRINTF("time-offset is %d the time is  %d \r\n",timesynch->time_offset,timesynch->get_synch_time(timesynch));    //打印时间时间偏移值和同步后的时间
+      //源节点进行时间同步后，经过5秒的时间开始发P2P帧(undone)
+      if(get_moteid() == SRC_ADDR)
+      {
+       // yxh_frame802154_t p2p_frame;
+        //frame_para_init(&p2p_frame,FRAME_TYPE_P2P);
+        //frame_to_send = p2p_frame;
+        static uint8_t type1 = FRAME_TYPE_P2P;
+        ctimer_set(&ct1,5*CLOCK_SECOND,yxh_frame_send, (void*)(&type1));
+        // PRINTF("in parse()   type : %x \r\n",*((uint8_t*)((void*)(&type1))));
+        //ctimer_set(&ct2,5*CLOCK_SECOND,yxh_frame_send, ptr); 
+      }
+      return;
+    
+    
+  case FRAME_TYPE_P2P:
+    /*
+    //打印接收到的帧
+    uart_printf("The received frame is: ");
+    for(uint8_t a=0;a<len;a++)
+    {
+      PRINTF("%x ",data[a]);
+    }
+    PRINTF("\r\n");   
+    */
+    
+    //时延
+    uint32_t delay = timesynch->get_synch_time(timesynch) - pf->time_stamp;
+    PRINTF("The delay is: %d\r\n", delay);
+    
     
     //目的节点收到帧后，做响应，不转发
     if(get_moteid() == (uint16_t)DEST_ADDR)
@@ -532,10 +568,8 @@ void yxh_frame802154_parse(void)
       //中继节点收到帧后通过设定ctimer进行转发
       PRINTF("p2pFrame receiceved!\r\n");
       
-      yxh_frame802154_t p2p_frame;
-      frame_para_init(&p2p_frame,FRAME_TYPE_P2P);
-      frame_to_send = p2p_frame;
-      ctimer_set(&ct1,CLOCK_SECOND,yxh_frame_send, NULL); 
+        static uint8_t type2 = FRAME_TYPE_P2P;
+        ctimer_set(&ct1,CLOCK_SECOND/10,yxh_frame_send, (void*)&type2); 
     }   
       }  //switch end  
     
@@ -543,8 +577,15 @@ void yxh_frame802154_parse(void)
       //同步节点只发送同步帧，接收到包后什么都不做
       return;  
     }
+  
 
-
+    //打印接收到的帧
+    uart_printf("The received frame is: ");
+    for(uint8_t a=0;a<len;a++)
+    {
+      PRINTF("%x ",data[a]);
+    }
+    PRINTF("\r\n");   
   }
   
 
@@ -576,12 +617,12 @@ void time_synch_gps(void *ptr)
     }
 
     //NETSTACK_RADIO.set_value(SET_CHANNEL,17);
-    yxh_frame802154_t synch_frame;
-    frame_para_init(&synch_frame,FRAME_TYPE_TIME_SYNCH);
-    frame_to_send = synch_frame;
-    yxh_frame_send(NULL);
-    ctimer_set(&ct1,CLOCK_SECOND,time_synch_gps, ptr); 
-
+   // yxh_frame802154_t synch_frame;
+    //frame_para_init(&synch_frame,FRAME_TYPE_TIME_SYNCH);
+    //frame_to_send = synch_frame;
+    static uint8_t type = FRAME_TYPE_TIME_SYNCH;
+    yxh_frame_send((void *)&type);
+    ctimer_set(&ct1,CLOCK_SECOND/10,time_synch_gps, ptr); 
 }
 
 

@@ -28,9 +28,9 @@
 #define FRAME802154_SHORTADDRMODE   (0x02)           
 #define FRAME802154_LONGADDRMODE    (0x03)
 
-#define DEST_ADDR    (0x31)                //choose the destination address  no.02
-#define SRC_ADDR    (0x2e)                //choose the destination address   no.01
-#define TIME_SYNCH_NODE               0x32
+#define DEST_ADDR    (0x18)                //choose the destination address  no.02
+#define SRC_ADDR    (0x15)                //choose the destination address   no.01
+#define TIME_SYNCH_NODE               0x19
 
 #define TIME_SYNCH_TIMES               3
 
@@ -89,7 +89,7 @@ typedef struct {
 
 typedef struct time_para{
         uint8_t  IsSyched;
-        uint32_t time_stamp;
+        //uint32_t time_stamp;
         int32_t  time_offset;
         int32_t  time_offset_period_align;         //用于时间同步周期对齐
         void (*timeoffset)(struct time_para *timepara,uint32_t time);
@@ -108,10 +108,10 @@ typedef struct {
   //uint8_t aux_sec_len;     /**<  Length (in bytes) of aux security header field */
 } field_length_t;
 
-void frame_para_init(yxh_frame802154_t *p,uint8_t frame_type);//init the parameters used in creating the frame and the operation machianism
+void frame_para_init(yxh_frame802154_t *p,void *ftype);//init the parameters used in creating the frame and the operation machianism
 //void peration_init();        //init the parameters used in the operation machianism
 int yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf);
-void yxh_frame_send(void *ptr);
+void yxh_frame_send(void *type);
 
 void yxh_frame802154_parse(void);
 rtimer_clock_t get_synch_time(time_para *timepara);

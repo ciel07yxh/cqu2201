@@ -1078,6 +1078,7 @@ static int off(void)
 static void at86rf231_isr(void)
 {
    RF_IRQ_CLEAR();
+   //PRINTF("#");
    process_poll(&at86rf231_process);
 
 }
@@ -1120,6 +1121,7 @@ PROCESS_THREAD(at86rf231_process, ev, data)
                       packetbuf_set_datalen(len);
                        // if(get_moteid()!= SRC_ADDR)
                         //{
+                      //uart_printf("ISR!");
                                               NETSTACK_RDC.input();
                        // }
                   }

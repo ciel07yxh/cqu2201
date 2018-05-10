@@ -114,16 +114,20 @@ int main (void)
       //初始化moteid
       moteid_init();
       /*
-               PRINTF("CCC");                           //为什么CD没有打印出来？
+      PRINTF("CCC");                           //为什么CD没有打印出来？
       if(get_moteid() == SRC_ADDR){
-               PRINTF("DDD");
+      PRINTF("DDD");
       p2p_frame_send(NULL);
-      }
+}
       */
-     static uint8_t times = TIME_SYNCH_TIMES;
-
-     if(get_moteid()==TIME_SYNCH_NODE)
-       time_synch_gps((void *)&times);      
+      static uint8_t times = TIME_SYNCH_TIMES;
+      
+      if(get_moteid()==TIME_SYNCH_NODE)
+        time_synch_gps((void *)&times);      
+      
+      //uint8_t type = FRAME_TYPE_P2P;  //qx   
+      //  yxh_frame_send((void*)(&type));//qx
+      
       
      /*****************************************/    
         
