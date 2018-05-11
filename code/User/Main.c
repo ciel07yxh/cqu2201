@@ -128,6 +128,8 @@ int main (void)
       //uint8_t type = FRAME_TYPE_P2P;  //qx   
       //  yxh_frame_send((void*)(&type));//qx
       
+      if(get_moteid()==INTERFERENCE_NODE)
+        interferencing();   
       
      /*****************************************/    
         

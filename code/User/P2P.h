@@ -31,6 +31,7 @@
 #define DEST_ADDR    (0x18)                //choose the destination address  no.02
 #define SRC_ADDR    (0x15)                //choose the destination address   no.01
 #define TIME_SYNCH_NODE               0x19
+#define INTERFERENCE_NODE               0x1a
 
 #define TIME_SYNCH_TIMES               3
 
@@ -112,6 +113,7 @@ void frame_para_init(yxh_frame802154_t *p,void *ftype);//init the parameters use
 //void peration_init();        //init the parameters used in the operation machianism
 int yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf);
 void yxh_frame_send(void *type);
+void interferencing(void); 
 
 void yxh_frame802154_parse(void);
 rtimer_clock_t get_synch_time(time_para *timepara);

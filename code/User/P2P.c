@@ -64,7 +64,10 @@
 
 rtimer_clock_t get_synch_time(time_para *timepara)
 {
+  //PRINTF("The rtimer_arch_now() is: %d", rtimer_arch_now());
+  //PRINTF("The time_offset is: %d", timepara->time_offset);
   return rtimer_arch_now() - timepara->time_offset;
+
 } 
 
 /*********************************************************************************************************
@@ -81,7 +84,7 @@ rtimer_clock_t get_synch_time(time_para *timepara)
 void timeoffset_calc(time_para *timepara,uint32_t time)
 {
   timepara->time_offset = RTIMER_NOW() -time;
-  PRINTF("The rtimer is: %d", RTIMER_NOW());
+  //PRINTF("The rtimer is: %d", RTIMER_NOW());
   //对周期取与
   timepara->time_offset_period_align=timepara->time_offset%PEROID_LENGTH;
   //若果为负数
@@ -490,7 +493,7 @@ void yxh_frame802154_parse(void)
     pf->frame_seq = p[0];
     p++;
     
-    pf->time_stamp = p[0] | p[1] | p[2] | p[3];
+    pf->time_stamp = p[0] | p[1]<<8 | p[2]<<16 | p[3]<<24 ;
     p += 4;
     
     pf->send_type = p[0];
@@ -529,7 +532,7 @@ void yxh_frame802154_parse(void)
       PRINTF("Time synchronized!\r\n");
       //计算时间偏置
       timesynch->timeoffset(timesynch,pf->time_stamp);                  //计算出接收节点的time_stamp 和time_offset_period_align值
-      PRINTF("time-offset is %d the time is  %d \r\n",timesynch->time_offset,timesynch->get_synch_time(timesynch));    //打印时间时间偏移值和同步后的时间
+      PRINTF("time-offset is %d \r\nthe synchronized time is  %d \r\n",timesynch->time_offset,timesynch->get_synch_time(timesynch));    //打印时间时间偏移值和同步后的时间
       //源节点进行时间同步后，经过5秒的时间开始发P2P帧(undone)
       if(get_moteid() == SRC_ADDR)
       {
@@ -545,6 +548,7 @@ void yxh_frame802154_parse(void)
     
     
   case FRAME_TYPE_P2P:
+    {
     /*
     //打印接收到的帧
     uart_printf("The received frame is: ");
@@ -554,9 +558,11 @@ void yxh_frame802154_parse(void)
     }
     PRINTF("\r\n");   
     */
-    
+   
     //时延
     uint32_t delay = timesynch->get_synch_time(timesynch) - pf->time_stamp;
+    //PRINTF("The synchronizied time is: %d\r\n", timesynch->get_synch_time(timesynch));
+    //PRINTF("The time_tamp is: %d\r\n", pf->time_stamp);
     PRINTF("The delay is: %d\r\n", delay);
     
     
@@ -570,8 +576,10 @@ void yxh_frame802154_parse(void)
       
         static uint8_t type2 = FRAME_TYPE_P2P;
         ctimer_set(&ct1,CLOCK_SECOND/10,yxh_frame_send, (void*)&type2); 
-    }   
-      }  //switch end  
+     }   
+       return;
+        }
+      }   //switch end
     
     }else{
       //同步节点只发送同步帧，接收到包后什么都不做
@@ -625,10 +633,21 @@ void time_synch_gps(void *ptr)
     ctimer_set(&ct1,CLOCK_SECOND/10,time_synch_gps, ptr); 
 }
 
+/*********************************************************************************************************
+** FFunction name:       interferencing
+** Descriptions:        干扰节点发送干扰信号
+** input parameters:    无
+** output parameters:   无
+** Returned value:      0
+** Created by:          袁小涵
+** Created Date:        2018-05-11
+*********************************************************************************************************/
 
-
-
-
+void interferencing(void)
+{
+    //static uint8_t type = FRAME_TYPE_INTERF;
+   
+}
 
 
 /*********************************************************************************************************

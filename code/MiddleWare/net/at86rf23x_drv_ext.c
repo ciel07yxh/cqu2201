@@ -621,7 +621,7 @@ static int init(void)
     ** Step 6, 扩展工作模式配置
     */  
     trx_bit_write(SR_MAX_FRAME_RETRIES, 3);
-    trx_bit_write(SR_MAX_CSMA_RETRIES, 5);
+    trx_bit_write(SR_MAX_CSMA_RETRIES, 7);              //"7" means perform no CSMA/CA retry
     temp = trx_rand_get();
     trx_bit_write(SR_CSMA_SEED_1, ((temp >> 8) & 0x07));
     trx_reg_write(RG_CSMA_SEED_0, (temp & 0xff));
