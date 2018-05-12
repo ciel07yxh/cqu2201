@@ -41,7 +41,8 @@
     
     uint8_t payload_to_send[2]={1,2};
     uint8_t frame_sequence = 0;
-    
+    uint8_t recframe_count = 1;
+      
     //uint8_t synch_node_flag  = 0x01;
 
   time_para synch={
@@ -291,6 +292,11 @@ void frame_para_init(yxh_frame802154_t *p,void *ftype)
        p->dest_pid = 0xFFFF;
        p->dest_addr[0] = 0xFF;
        p->dest_addr[1] = 0xFF;
+     } else if (*((uint8_t*)ftype) ==FRAME_TYPE_INTERF)
+     {
+       p->dest_pid=get_cluster_name(get_moteid()+1);
+       p->dest_addr[0]=0x01;  
+       p->dest_addr[1]= 0x00;
      }
      p->frame_seq = frame_sequence++;
      p->time_stamp = timepara->get_synch_time(timepara);
@@ -358,6 +364,13 @@ void yxh_frame_send(void * type)
      static uint8_t type = FRAME_TYPE_P2P;
      ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send, (void*)&type); 
      }
+     if(get_moteid() == INTERFERENCE_NODE)
+     {
+     //ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send,NULL);
+     static uint8_t type1 = FRAME_TYPE_P2P;
+     ctimer_set(&ct,3*CLOCK_SECOND,yxh_frame_send, (void*)&type1); 
+     }
+     
 }
 
 /*********************************************************************************************************
@@ -569,7 +582,7 @@ void yxh_frame802154_parse(void)
     //目的节点收到帧后，做响应，不转发
     if(get_moteid() == (uint16_t)DEST_ADDR)
     {
-      PRINTF("p2pFrame receiceved by destination node!\r\n");
+      PRINTF("No.%d p2pFrame receiceved by destination node!\r\n",recframe_count++);
     }else{
       //中继节点收到帧后通过设定ctimer进行转发
       PRINTF("p2pFrame receiceved!\r\n");
@@ -645,8 +658,9 @@ void time_synch_gps(void *ptr)
 
 void interferencing(void)
 {
-    //static uint8_t type = FRAME_TYPE_INTERF;
-   
+    static struct ctimer  ct1; 
+    static uint8_t type = FRAME_TYPE_INTERF;
+    ctimer_set(&ct1,5*CLOCK_SECOND,yxh_frame_send, (void *)&type); 
 }
 
 

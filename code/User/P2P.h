@@ -40,6 +40,7 @@
 #define FRAME_TYPE_INTERF       0x03
 
 #define YXH_RECV    1
+#define INTERFERENCE    1
 
 #define BSM_FRE_HZ      10                              //BSM 10Hz
 #define PEROID_LENGTH   (RTIMER_SECOND/BSM_FRE_HZ)      //BSM 周期时间     
