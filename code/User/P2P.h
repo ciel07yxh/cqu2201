@@ -25,22 +25,29 @@
 #ifndef __P2P_H__ 
 #define __P2P_H__ 
 
+#include "Contiki\core\dev\radio.h"
+
+
 #define FRAME802154_SHORTADDRMODE   (0x02)           
 #define FRAME802154_LONGADDRMODE    (0x03)
 
-#define DEST_ADDR    (0x18)                //choose the destination address  no.02
-#define SRC_ADDR    (0x15)                //choose the destination address   no.01
-#define TIME_SYNCH_NODE               0x19
-#define INTERFERENCE_NODE               0x1a
+//#define DEST_ADDR    (0x18)                //choose the destination address  no.02
+#define SRC_ADDR        31           //choose the destination address   no.01
+#define TIME_SYNCH_NODE               35
+//#define INTERFERENCE_NODE               0x1a
 
-#define TIME_SYNCH_TIMES               3
+#define TIME_SYNCH_TIMES           30    
 
 #define FRAME_TYPE_TIME_SYNCH   0x01
 #define FRAME_TYPE_P2P          0x02
 #define FRAME_TYPE_INTERF       0x03
 
 #define YXH_RECV    1
-#define INTERFERENCE    1
+#define INTERFERENCE    0
+#define BUFFER    0
+
+#define SET_MAX_FRAME_RETRIES   0x00
+
 
 #define BSM_FRE_HZ      10                              //BSM 10Hz
 #define PEROID_LENGTH   (RTIMER_SECOND/BSM_FRE_HZ)      //BSM 周期时间     
@@ -91,7 +98,7 @@ typedef struct {
 
 typedef struct time_para{
         uint8_t  IsSyched;
-        //uint32_t time_stamp;
+        uint32_t time_stamp;
         int32_t  time_offset;
         int32_t  time_offset_period_align;         //用于时间同步周期对齐
         void (*timeoffset)(struct time_para *timepara,uint32_t time);
@@ -110,6 +117,15 @@ typedef struct {
   //uint8_t aux_sec_len;     /**<  Length (in bytes) of aux security header field */
 } field_length_t;
 
+
+struct packet_list{
+  struct packet_list * next;
+  yxh_frame802154_t * data;
+};
+
+
+
+
 void frame_para_init(yxh_frame802154_t *p,void *ftype);//init the parameters used in creating the frame and the operation machianism
 //void peration_init();        //init the parameters used in the operation machianism
 int yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf);
@@ -122,6 +138,16 @@ void timeoffset_calc(time_para *timepara,uint32_t time);
 //int frame802154_hdrlen(frame802154_t *p);
 //void frame802154_recieve();
 void time_synch_gps(void *ptr);
+
+void qx_sendBuf(yxh_frame802154_t * frame);
+void sendAir(void *p);
+void deal_recframe(yxh_frame802154_t * rec);
+
+/*********************************************************************************************************
+  外部函数及变量定义
+*********************************************************************************************************/
+extern time_para synch;
+
 
 
 #endif /* __CONTIKI_CONF_H__ */

@@ -98,7 +98,7 @@
 #define UIP_CONF_LL_802154              1
 #define UIP_CONF_LLH_LEN                0
 #define UIP_CONF_NETIF_MAX_ADDRESSES    3
-
+ 
 // TCP, UDP, ICMP
 #define UIP_CONF_TCP                    1
 #define UIP_CONF_UDP                    1

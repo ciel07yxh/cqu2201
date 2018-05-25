@@ -35,7 +35,6 @@
 #define PRINTF(...)
 #endif
 
-
 /*********************************************************************************************************
 **  外部函数声明
 *********************************************************************************************************/
@@ -57,7 +56,7 @@ PROCESS_THREAD(led_process, ev, data)
     etimer_set(&et, CLOCK_SECOND);
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
     sys_led_toggle(0);
-    sys_led_toggle(1);
+    
     //PRINTF("The moteid is %d \r\n",get_moteid());
   }
    PROCESS_END();
@@ -114,20 +113,16 @@ int main (void)
       NETSTACK_RADIO.on();
       //初始化moteid
       moteid_init();
-      /*
-      PRINTF("CCC");                           //为什么CD没有打印出来？
-      if(get_moteid() == SRC_ADDR){
-      PRINTF("DDD");
-      p2p_frame_send(NULL);
-}
-      */
+      
+      
       static uint8_t times = TIME_SYNCH_TIMES;
       
       if(get_moteid()==TIME_SYNCH_NODE)
-        time_synch_gps((void *)&times);      
+      {
+        time_synch_gps((void *)&times);
+      }
       
-      //uint8_t type = FRAME_TYPE_P2P;  //qx   
-      //  yxh_frame_send((void*)(&type));//qx
+      
 #if   INTERFERENCE
       if(get_moteid()==INTERFERENCE_NODE)
         interferencing();  

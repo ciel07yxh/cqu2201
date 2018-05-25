@@ -23,11 +23,10 @@
 *********************************************************************************************************/
 #include "includes.h"
 #include "P2P.h"
-
 /*********************************************************************************************************
 **  Define global variaty
 *********************************************************************************************************/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include "runtime/uartstdio.h"
 #define PRINTF(...)   uart_printf(__VA_ARGS__)
@@ -36,23 +35,31 @@
 #endif
 
 
-    yxh_frame802154_t frame_to_send;
-    yxh_frame802154_t rec_frame;
-    
-    uint8_t payload_to_send[2]={1,2};
-    uint8_t frame_sequence = 0;
-    uint8_t recframe_count = 1;
-      
-    //uint8_t synch_node_flag  = 0x01;
 
-  time_para synch={
-    0,
-    //0,
-    0,
-    0,
+yxh_frame802154_t rec_frame;
+
+uint8_t payload_to_send[2]={1,2};
+uint16_t frame_sequence = 0;
+uint16_t recframe_count = 1;
+uint16_t sentframe_count = 1;
+uint16_t bufframe_count = 1;
+
+//uint8_t synch_node_flag  = 0x01;
+uint8_t sendflag = 0;
+
+time_para synch={
+  0,
+  0,
+  0,
+  0,
   timeoffset_calc,
   get_synch_time
-  };
+};
+
+#define MAX_QUEUED_PACKETS 60
+MEMB(frame_size, yxh_frame802154_t, MAX_QUEUED_PACKETS);
+MEMB(packet_size, struct packet_list, MAX_QUEUED_PACKETS);
+LIST(packet_list);
 /*********************************************************************************************************
 ** Function name:       get_synch_time
 ** Descriptions:        获取同步时间
@@ -65,10 +72,7 @@
 
 rtimer_clock_t get_synch_time(time_para *timepara)
 {
-  //PRINTF("The rtimer_arch_now() is: %d", rtimer_arch_now());
-  //PRINTF("The time_offset is: %d", timepara->time_offset);
-  return rtimer_arch_now() - timepara->time_offset;
-
+  return  RTIMER_NOW() - timepara->time_offset;
 } 
 
 /*********************************************************************************************************
@@ -82,10 +86,10 @@ rtimer_clock_t get_synch_time(time_para *timepara)
 *********************************************************************************************************/
 
 
+
 void timeoffset_calc(time_para *timepara,uint32_t time)
 {
-  timepara->time_offset = RTIMER_NOW() -time;
-  //PRINTF("The rtimer is: %d", RTIMER_NOW());
+  timepara->time_offset = timepara->time_stamp -time;
   //对周期取与
   timepara->time_offset_period_align=timepara->time_offset%PEROID_LENGTH;
   //若果为负数
@@ -105,7 +109,7 @@ void timeoffset_calc(time_para *timepara,uint32_t time)
 ** Created by:          Xiaohan Y
 ** Created Date:        2018-04-11
 *********************************************************************************************************/
-CC_INLINE static uint8_t                                  //??
+CC_INLINE static uint8_t                                  
 addr_len(uint8_t mode)
 {
   switch(mode) {
@@ -251,17 +255,15 @@ yxh_frame802154_create(yxh_frame802154_t *p, uint8_t *buf)
 ** Created by:          Xiaohan Y
 ** Created Date:        2018-04-11
 *********************************************************************************************************/
+time_para *timepara = & synch; 
 void frame_para_init(yxh_frame802154_t *p,void *ftype)
 {
-    time_para *timepara = & synch; 
-    //uint8_t *type = ftype;
-    
     //init the fcf
     p->fcf.frame_type=0x01;
     p->fcf.security_enabled=0x00;
     p->fcf.frame_pending=0x00;
     p->fcf.ack_required=0x01;
-    //p2p_frame.panid_compression=;                  //this is to be determined in field_flen()
+    //p2p_frame.panid_compression=;                                      //this is to be determined in field_flen()
     p->fcf.dest_addr_mode=FRAME802154_SHORTADDRMODE;                      //short address
     p->fcf.frame_version=0x01;
     p->fcf.src_addr_mode=FRAME802154_SHORTADDRMODE;                        //short address
@@ -276,22 +278,20 @@ void frame_para_init(yxh_frame802154_t *p,void *ftype)
     p->src_addr[1]=0x00;
     
     
-    
     p->payload=payload_to_send;
     p->payload_len=sizeof(payload_to_send);
-  //  if(p2p_frame.dest_addr[0] == DEST_ADDR){}
 
      if(*((uint8_t*)ftype) == FRAME_TYPE_P2P )
      {
-       p->dest_pid=get_cluster_name(get_moteid()+1);
-       p->dest_addr[0]=get_moteid()+1;  
+       p->dest_pid=get_cluster_name(get_moteid()-15);
+       p->dest_addr[0]=get_moteid()-15;  
        p->dest_addr[1]= 0x00;
-           // PRINTF("dest addr: %x , dest panid: %x", p->dest_addr[0], p->dest_pid);
      } else if(*((uint8_t*)ftype) ==FRAME_TYPE_TIME_SYNCH ) 
      {
        p->dest_pid = 0xFFFF;
        p->dest_addr[0] = 0xFF;
        p->dest_addr[1] = 0xFF;
+       p->fcf.ack_required=0x00;
      } else if (*((uint8_t*)ftype) ==FRAME_TYPE_INTERF)
      {
        p->dest_pid=get_cluster_name(get_moteid()+1);
@@ -300,10 +300,7 @@ void frame_para_init(yxh_frame802154_t *p,void *ftype)
      }
      p->frame_seq = frame_sequence++;
      p->time_stamp = timepara->get_synch_time(timepara);
-     p->send_type = *((uint8_t*)ftype);
-     //PRINTF("send_type : %x \r\n", *((uint8_t *)ftype));
-   //  PRINTF("dest addr: %x , dest panid: %x", p->dest_addr[0], p->dest_pid);
-    
+     p->send_type = *((uint8_t*)ftype);    
 }
 
 /*********************************************************************************************************
@@ -315,62 +312,62 @@ void frame_para_init(yxh_frame802154_t *p,void *ftype)
 ** Created by:          Xiaohan Y
 ** Created Date:        2018-04-11
 *********************************************************************************************************/
+struct ctimer ctSendP;
 void yxh_frame_send(void * type)
 {
- // PRINTF("type : %x \r\n", *((uint8_t *)type));
-    static struct ctimer ct;
-    yxh_frame802154_t *yxh_frame = &frame_to_send;
-    //uint8_t ftype = &type;
-
+    yxh_frame802154_t frame_to_send;
+    yxh_frame802154_t *yxh_frame = &frame_to_send;    //frame_to_send是为了给指针yxh_frame分配地址
     uint8_t frame_buf[100];
+    
    //initialize the p2p frame parameters
     frame_para_init(yxh_frame,type);
-   // PRINTF("dest addr: %x ", yxh_frame->dest_addr[0]);
     
-    //yxh_frame802154_t p2p_frame=p2p_frame;
-    //Initialize the p2p frame, put the structure value into a buffer
+    //只发200帧，不然frame_seq装不下
+    if(yxh_frame->frame_seq >200 )
+      return;
+    
+#if BUFFER        //使用帧缓存
+    //时间同步帧直接发送
+    if((*((uint8_t*)type))==FRAME_TYPE_TIME_SYNCH){
       int sendlength = yxh_frame802154_create(yxh_frame, frame_buf);
+      int state = NETSTACK_RADIO.send(frame_buf, sendlength); 
       
-   // PRINTF("dest addr: %x ", yxh_frame->dest_addr[0]);
-    
-      //Send p2p frame
-     int state = NETSTACK_RADIO.send(frame_buf, sendlength); 
-
-     //print send frame and result(state)
-     PRINTF("The send frame is:");
-     for(uint8_t a=0;a<sendlength;a++)
-     {
+      //打印发送内容
+      PRINTF("state=%d\r\n",state);
+      for(uint8_t a=0;a<sendlength;a++)
+      {
         PRINTF("%x ",frame_buf[a]);
-     }
-     PRINTF("\r\n");   
-     
-     if(frame_to_send.send_type == FRAME_TYPE_TIME_SYNCH)
-       return;
-
-     PRINTF("The send state is %d\r\n",state);                  //   state = enSendState = RADIO_TX_OK=0; 
-     
-    //ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send,NULL);
-     
-     /*
-     if(state != 0)
-     {
-     ctimer_set(&ct,CLOCK_SECOND/10,yxh_frame_send,NULL);
-     }
-     */
-     
-     if(get_moteid() == SRC_ADDR)
-     {
-     //ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send,NULL);
-     static uint8_t type = FRAME_TYPE_P2P;
-     ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send, (void*)&type); 
-     }
-     if(get_moteid() == INTERFERENCE_NODE)
-     {
-     //ctimer_set(&ct,CLOCK_SECOND,yxh_frame_send,NULL);
-     static uint8_t type1 = FRAME_TYPE_P2P;
-     ctimer_set(&ct,3*CLOCK_SECOND,yxh_frame_send, (void*)&type1); 
-     }
-     
+      }
+      PRINTF("\r\n\r\n"); 
+      
+    }else{
+      //p2p帧放缓存
+      qx_sendBuf(yxh_frame);
+      
+    }   
+#else          //不使用帧缓存    
+    yxh_frame->time_stamp = timepara->get_synch_time(timepara);
+    int sendlength = yxh_frame802154_create(yxh_frame, frame_buf);
+    int state = NETSTACK_RADIO.send(frame_buf, sendlength);
+    uart_printf("No.%d frame is sent to the air! \r\n",bufframe_count++);
+    
+    if(state == 0)
+    {
+      uart_printf("No.%d frame is sent successfully! \r\n",sentframe_count++);
+    }
+    //发送内容
+    PRINTF("state=%d\r\n",state);
+    for(uint8_t a=0;a<sendlength;a++)
+    {
+      PRINTF("%x ",frame_buf[a]);
+    }
+    PRINTF("\r\n\r\n"); 
+    
+#endif   
+    //调用自己
+    if((*((uint8_t*)type))!=FRAME_TYPE_TIME_SYNCH){
+      ctimer_set(&ctSendP,CLOCK_SECOND/10,yxh_frame_send, type); 
+    }  
 }
 
 /*********************************************************************************************************
@@ -395,14 +392,7 @@ void yxh_frame_send(void * type)
  */
 
 void yxh_frame802154_parse(void)
-{
- 
-  PRINTF("@");
-  
-  static struct ctimer ct1;
-  //static struct ctimer ct2;
-  
-  time_para * timesynch = &synch;
+{ 
   uint8_t *p; 
   yxh_frame802154_fcf_t fcf;
   int c;
@@ -411,6 +401,7 @@ void yxh_frame802154_parse(void)
   int len = (int)packetbuf_datalen();
   yxh_frame802154_t *pf = &rec_frame;
    
+  
   if(len <= 3) {
     return ;
   }
@@ -511,107 +502,88 @@ void yxh_frame802154_parse(void)
     
     pf->send_type = p[0];
     
-  /* header length */
-  c = p - data;          
-  /* payload length */
-  pf->payload_len = (len - c);
-  /* payload */
-  pf->payload = p;
-      
-
-  
-  if(get_moteid() != TIME_SYNCH_NODE )
-  {
-    //非同步节点接收到包后根据不同帧类型（send_frame），做不同处理
-    switch(pf->send_type){
-      
-    case FRAME_TYPE_TIME_SYNCH:
-      //只同步一次
-      if(timesynch->IsSyched)
-      {
-        break;
-      }
-      timesynch->IsSyched = true;
-      
-    /*
-    //打印接收到的帧
-    uart_printf("The received frame is: ");
-    for(uint8_t a=0;a<len;a++)
+    /* header length */
+    c = p - data;          
+    /* payload length */
+    pf->payload_len = (len - c);
+    /* payload */
+    pf->payload = p;
+    
+//判断接收节点类型来处理帧
+    if(get_moteid() != TIME_SYNCH_NODE )
     {
-      PRINTF("%x ",data[a]);
-    }
-    PRINTF("\r\n");   
-    */
-      PRINTF("Time synchronized!\r\n");
-      //计算时间偏置
-      timesynch->timeoffset(timesynch,pf->time_stamp);                  //计算出接收节点的time_stamp 和time_offset_period_align值
-      PRINTF("time-offset is %d \r\nthe synchronized time is  %d \r\n",timesynch->time_offset,timesynch->get_synch_time(timesynch));    //打印时间时间偏移值和同步后的时间
-      //源节点进行时间同步后，经过5秒的时间开始发P2P帧(undone)
-      if(get_moteid() == SRC_ADDR)
-      {
-       // yxh_frame802154_t p2p_frame;
-        //frame_para_init(&p2p_frame,FRAME_TYPE_P2P);
-        //frame_to_send = p2p_frame;
-        static uint8_t type1 = FRAME_TYPE_P2P;
-        ctimer_set(&ct1,5*CLOCK_SECOND,yxh_frame_send, (void*)(&type1));
-        // PRINTF("in parse()   type : %x \r\n",*((uint8_t*)((void*)(&type1))));
-        //ctimer_set(&ct2,5*CLOCK_SECOND,yxh_frame_send, ptr); 
-      }
-      return;
+      deal_recframe(pf);
     
-    
-  case FRAME_TYPE_P2P:
-    {
-    /*
-    //打印接收到的帧
-    uart_printf("The received frame is: ");
-    for(uint8_t a=0;a<len;a++)
-    {
-      PRINTF("%x ",data[a]);
-    }
-    PRINTF("\r\n");   
-    */
-   
-    //时延
-    uint32_t delay = timesynch->get_synch_time(timesynch) - pf->time_stamp;
-    //PRINTF("The synchronizied time is: %d\r\n", timesynch->get_synch_time(timesynch));
-    //PRINTF("The time_tamp is: %d\r\n", pf->time_stamp);
-    PRINTF("The delay is: %d\r\n", delay);
-    
-    
-    //目的节点收到帧后，做响应，不转发
-    if(get_moteid() == (uint16_t)DEST_ADDR)
-    {
-      PRINTF("No.%d p2pFrame receiceved by destination node!\r\n",recframe_count++);
-    }else{
-      //中继节点收到帧后通过设定ctimer进行转发
-      PRINTF("p2pFrame receiceved!\r\n");
-      
-        static uint8_t type2 = FRAME_TYPE_P2P;
-        ctimer_set(&ct1,CLOCK_SECOND/10,yxh_frame_send, (void*)&type2); 
-     }   
-       return;
-        }
-      }   //switch end
-    
-    }else{
-      //同步节点只发送同步帧，接收到包后什么都不做
+     }else{
+      //同步节点只发送同步帧，接收到包后什么都不做    
       return;  
-    }
+    } 
   
-
     //打印接收到的帧
-    uart_printf("The received frame is: ");
+    PRINTF("The received frame is: ");
     for(uint8_t a=0;a<len;a++)
     {
       PRINTF("%x ",data[a]);
     }
-    PRINTF("\r\n");   
+    PRINTF("\r\n");  
+
   }
   
 
 /*********************************************************************************************************
-** FFunction name:       time_synch_gps
+** Function name:       deal_recframe
+** Descriptions:        对接收的帧做处理
+** input parameters:    
+** output parameters:   无
+** Returned value:      0
+** Created by:          袁小涵
+** Created Date:        2018-05-24
+*********************************************************************************************************/
+void deal_recframe(yxh_frame802154_t * rec)
+{
+  static struct ctimer ct1;
+  time_para * timesynch = &synch;
+  uint8_t moteId = get_moteid();
+  //非同步节点接收到包后根据不同帧类型（send_frame），做不同处理
+  switch(rec->send_type){
+  case FRAME_TYPE_TIME_SYNCH:
+//    //只同步一次
+//    if(timesynch->IsSyched == true)
+//    {
+//      break;
+//    }
+    timesynch->IsSyched = true;
+    //计算出接收节点的time_stamp 和time_offset_period_align值
+    timesynch->timeoffset(timesynch,rec->time_stamp);                  
+    //打印时间时间偏移值和同步后的时间
+    PRINTF("time-offset is %d \r\nthe synchronized time is  %d \r\n",timesynch->time_offset,timesynch->get_synch_time(timesynch));    
+    //源节点进行时间同步后，经过5秒的时间开始发P2P帧(undone)
+    if( moteId >= SRC_ADDR && moteId <= SRC_ADDR+4 )
+    {
+      static uint8_t type1 = FRAME_TYPE_P2P;
+      ctimer_set(&ct1,5*CLOCK_SECOND,yxh_frame_send, (void*)(&type1));
+    }
+    break;
+    
+  case FRAME_TYPE_P2P:
+    {        
+      PRINTF("The time of stamp is: %u\r\n", rec->time_stamp);
+      PRINTF("The Rtime of receiving moument is: %u\r\n",synch.time_stamp);
+      PRINTF("The time of receiving moument is: %u\r\n",(synch.time_stamp - synch.time_offset));
+      //时延
+      uint32_t delay = (synch.time_stamp - synch.time_offset)- rec->time_stamp;
+      PRINTF("The delay of p2p is: %u\r\n", delay);
+      uart_printf("%d ", delay);
+      PRINTF("No.%d p2pFrame receiceved by destination node!\r\n",recframe_count++);      
+      break;
+    }
+  }   //switch end
+  
+}
+
+
+/*********************************************************************************************************
+** Function name:       time_synch_gps
 ** Descriptions:        进行GPS时间同步信号模拟
 ** input parameters:    同步帧发送次数
 ** output parameters:   无
@@ -619,22 +591,19 @@ void yxh_frame802154_parse(void)
 ** Created by:          袁小涵
 ** Created Date:        2018-05-07
 *********************************************************************************************************/
-
-
-
-
 void time_synch_gps(void *ptr)
 {
     static struct ctimer ct1;
-
-    
+ 
     uint8_t time_to_synch;
     if(ptr!=NULL)
     {
       PRINTF("time_synch_gps %d\r\n",(*(uint8_t *)ptr));
       time_to_synch=(*(uint8_t *)ptr)--;
-      if(!time_to_synch)
+      if(!time_to_synch){
+        PRINTF("time synch is over");
           return;
+      }
     }
 
     //NETSTACK_RADIO.set_value(SET_CHANNEL,17);
@@ -644,6 +613,7 @@ void time_synch_gps(void *ptr)
     static uint8_t type = FRAME_TYPE_TIME_SYNCH;
     yxh_frame_send((void *)&type);
     ctimer_set(&ct1,CLOCK_SECOND/10,time_synch_gps, ptr); 
+    
 }
 
 /*********************************************************************************************************
@@ -655,7 +625,6 @@ void time_synch_gps(void *ptr)
 ** Created by:          袁小涵
 ** Created Date:        2018-05-11
 *********************************************************************************************************/
-
 void interferencing(void)
 {
     static struct ctimer  ct1; 
@@ -663,6 +632,127 @@ void interferencing(void)
     ctimer_set(&ct1,5*CLOCK_SECOND,yxh_frame_send, (void *)&type); 
 }
 
+
+
+
+/*********************************************************************************************************
+** Function name:       
+** Descriptions:        
+** input parameters:    无
+** output parameters:   无
+** Returned value:      0
+** Created by:          
+** Created Date:        2018-05-11
+*********************************************************************************************************/
+uint8_t startSend=0;
+struct ctimer ctSendAir;
+
+//放入缓存
+void qx_sendBuf(yxh_frame802154_t * frame){
+  
+  if(list_length(packet_list)>50){//空间已满
+    return;
+  }
+  //缓存池赋值
+  struct packet_list* q;
+  q = memb_alloc(&packet_size);
+  q->data=memb_alloc(&frame_size);  
+  //fcf赋值
+  q->data->fcf.frame_type=frame->fcf.frame_type;        /**< 3 bit. Frame type field, see 802.15.4 */
+  q->data->fcf.security_enabled=frame->fcf.security_enabled;  /**< 1 bit. True if security is used in this frame */
+  q->data->fcf.frame_pending=frame->fcf.frame_pending;     /**< 1 bit. True if sender has more data to send */
+  q->data->fcf.ack_required=frame->fcf.ack_required;      /**< 1 bit. Is an ack frame required? */
+  q->data->fcf.panid_compression=frame->fcf.panid_compression; /**< 1 bit. Is this a compressed header? */
+  q->data->fcf.dest_addr_mode=frame->fcf.dest_addr_mode;    /**< 2 bit. Destination address mode, see 802.15.4 */
+  q->data->fcf.frame_version=frame->fcf.frame_version;     /**< 2 bit. 802.15.4 frame version */
+  q->data->fcf.src_addr_mode=frame->fcf.src_addr_mode;     /**< 2 bit. Source address mode, see 802.15.4 */
+  //帧赋值
+  q->data->seq=frame->seq;                    /**< Sequence number */
+  q->data->dest_pid=frame->dest_pid;              /**< Destination PAN ID */
+  for(int i=0;i<8;i++){
+    q->data->dest_addr[i]=frame->dest_addr[i];           /**< Destination address */
+    q->data->src_addr[i]=frame->src_addr[i];            /**< Source address */  
+  }  
+  q->data->src_pid=frame->src_pid;               /**< Source PAN ID */
+  q->data->payload=frame->payload;               /**< Pointer to 802.15.4 payload */
+  q->data->frame_seq=frame->frame_seq;
+  q->data->time_stamp=frame->time_stamp;
+  q->data->send_type=frame->send_type;
+  q->data->payload_len=frame->payload_len;                /**< Length of payload field */         //  ??
+
+  //添加进缓存池 最多51
+  list_add(packet_list, q);
+  uart_printf("list已用空间为%d\r\n",list_length(packet_list));
+  uart_printf("No.%d frame is successfully put in the buffer! \r\n",bufframe_count++);
+  
+  //开始扫描缓存池
+  if(startSend==0){
+    startSend=1;
+     //ctimer_set(&ctSendAir,CLOCK_SECOND/10+CLOCK_SECOND/100*get_moteid(),sendAir, NULL); //tdma
+    ctimer_set(&ctSendAir,CLOCK_SECOND/10,sendAir, NULL); //csma
+  }
+}
+
+
+/*********************************************************************************************************
+** Function name:       
+** Descriptions:        
+** input parameters:    无
+** output parameters:   无
+** Returned value:      0
+** Created by:          
+** Created Date:        2018-05-11
+*********************************************************************************************************/
+struct ctimer ctSendAir;
+
+void sendAir(void *p){
+
+  //检查缓存池
+  if(list_length(packet_list)!= 0){//缓存池不为空
+    struct packet_list *q = list_head(packet_list);
+    if(q!=NULL){
+      //修改时间戳，然后 装帧且发送
+      q->data->time_stamp = timepara->get_synch_time(timepara);
+      uint8_t buf[100];
+      int sendlength = yxh_frame802154_create(q->data,buf);    
+      int state = NETSTACK_RADIO.send(buf,sendlength); 
+      
+      //发送内容
+      PRINTF("state=%d\r\n",state);
+      for(uint8_t a=0;a<sendlength;a++)
+      {
+        PRINTF("%x ",buf[a]);
+      }
+      PRINTF("\r\n\r\n"); 
+ 
+      //n次发送未接收到ACK则发送下一帧
+      if(state == 3)
+        sendflag += 1;      
+      if(sendflag == 3)
+      {
+        list_remove(packet_list, q);
+        memb_free(&frame_size,q->data);
+        memb_free(&packet_size, q);
+        uart_printf("Send failed, next to send!\r\n");
+      }
+
+      //处理缓存池
+      if(state == 0){    
+        list_remove(packet_list, q);
+        memb_free(&frame_size,q->data);
+        memb_free(&packet_size, q);
+        uart_printf("list已用空间为%d\r\n",list_length(packet_list));
+        uart_printf("No.%d frame is successfully sent! \r\n",sentframe_count++);
+        sendflag = 0;
+      }
+      
+      
+    }  
+  }
+  
+  //循环扫描缓存池
+  ctimer_set(&ctSendAir,CLOCK_SECOND/10,sendAir, NULL); 
+}
 
 /*********************************************************************************************************
   END FILE
