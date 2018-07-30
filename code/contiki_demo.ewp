@@ -78,7 +78,7 @@
                 </option>
                 <option>
                     <name>OGChipSelectEditMenu</name>
-                    <state>STM32F103RC	ST STM32F103RC</state>
+                    <state>STM32F103ZC	ST STM32F103ZC</state>
                 </option>
                 <option>
                     <name>GenLowLevelInterface</name>
@@ -138,7 +138,7 @@
                 </option>
                 <option>
                     <name>GFPUDeviceSlave</name>
-                    <state>STM32F103RC	ST STM32F103RC</state>
+                    <state>STM32F103ZC	ST STM32F103ZC</state>
                 </option>
                 <option>
                     <name>FPU2</name>
@@ -1086,7 +1086,7 @@
                 </option>
                 <option>
                     <name>OGLastSavedByProductVersion</name>
-                    <state>8.11.1.13270</state>
+                    <state>8.10.1.12859</state>
                 </option>
                 <option>
                     <name>GeneralEnableMisra</name>
@@ -2949,7 +2949,7 @@
             <name>$PROJ_DIR$\User\Main.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\User\moteid.c</name>
+            <name>$PROJ_DIR$\User\tcp-client.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\User\test_shell.c</name>
@@ -2959,9 +2959,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\User\udp-client.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\User\udp-server.c</name>
         </file>
     </group>
 </project>

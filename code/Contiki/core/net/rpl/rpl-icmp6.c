@@ -196,6 +196,13 @@ dis_output(uip_ipaddr_t *addr)
   buffer = UIP_ICMP_PAYLOAD;
   buffer[0] = buffer[1] = 0;
 
+  buffer[2]=0; 
+  buffer[3]=0; 
+  buffer[4]=0; 
+  buffer[5]=0; 
+  buffer[6]=0; 
+  buffer[7]=0;
+  
   if(addr == NULL) {
     uip_create_linklocal_rplnodes_mcast(&tmpaddr);
     addr = &tmpaddr;
@@ -205,7 +212,8 @@ dis_output(uip_ipaddr_t *addr)
   PRINT6ADDR(addr);
   PRINTF("\n");
 
-  uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
+  uip_icmp6_send(addr,ICMP6_RPL,RPL_CODE_DIS,8); 
+  //uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
 }
 /*---------------------------------------------------------------------------*/
 static void

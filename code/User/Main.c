@@ -38,7 +38,7 @@
 /*********************************************************************************************************
 **  外部函数声明
 *********************************************************************************************************/
-PROCESS_NAME(udp_client_process);
+PROCESS_NAME(tcp_client_process);
 
 /*********************************************************************************************************
 **  内部函数声明
@@ -57,7 +57,7 @@ PROCESS_THREAD(led_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
     sys_led_toggle(0);
     sys_led_toggle(1);
-    PRINTF("The moteid is %d \r\n",get_moteid());
+   // PRINTF("The LED is toggle!\r\n");
   }
    PROCESS_END();
 }
@@ -92,7 +92,7 @@ int main (void)
 
     // 初始化控制台
     uart_stdio_init(115200);
-    moteid_init();
+
 
     PRINTF("The Contiki System Start!\r\n");
 
@@ -114,7 +114,7 @@ int main (void)
     autostart_start(autostart_processes);
    // watchdog_init();
    // watchdog_start();
-    process_start(&udp_client_process, NULL);
+    process_start(&tcp_client_process, NULL);
     for(;;)
     {
         do

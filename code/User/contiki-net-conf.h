@@ -84,7 +84,7 @@
 
 
 // 定义无线网络的PAN ID
-#define IEEE802154_CONF_PANID       0x1420   // UIP_HTONS(0x2014)
+#define IEEE802154_CONF_PANID       UIP_HTONS(0x2014)
 // 定义通信信道, 15, 16, 21, 22是与WIFI不干扰的信道
 #define IEEE802154_RF_CONF_CHANNEL  21
 
@@ -135,7 +135,7 @@
 #define UIP_CONF_IP_FORWARD             0
 #define RPL_CONF_STATS                  0
 #define RPL_CONF_MAX_DAG_ENTRIES        1
-#define RPL_CONF_OF                     rpl_mrhof //rpl_of0 //rpl_mrhof
+#define RPL_CONF_OF                     rpl_of0 //rpl_mrhof
 #define RPL_CONF_MAX_PARENTS_PER_DAG    4
 #define RPL_CONF_MAX_INSTANCES          1
 #define RPL_CONF_MAX_DAG_PER_INSTANCE   1

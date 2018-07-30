@@ -157,8 +157,11 @@ set_global_address(void)
  
 #if 1
 /* Mode 1 - 64 bits inline */
-   uip_ip6addr(&server_ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 1);
+  // uip_ip6addr(&server_ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 1);
    //uip_ip6addr(&server_ipaddr, 0x2001, 0, 0, 0, 0, 0, 0, 1);
+   
+     // 发送到IPv4的主机192.168.1.20
+   uip_ip6addr(&server_ipaddr, 0x3ffe, 0, 0, 0, 0, 0, 0xc0a8, 0x0114);
 #elif 0
 /* Mode 2 - 16 bits inline */
   uip_ip6addr(&server_ipaddr, 0xaaaa, 0, 0, 0, 0, 0x00ff, 0xfe00, 1);

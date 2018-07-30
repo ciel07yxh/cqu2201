@@ -3180,16 +3180,13 @@
             <name>$PROJ_DIR$\User\Main.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\User\moteid.c</name>
+            <name>$PROJ_DIR$\User\tcp-client.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\User\test_shell.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\User\udp-client.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\User\udp-server.c</name>
         </file>
     </group>
 </project>
