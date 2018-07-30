@@ -209,7 +209,7 @@ static uint8 trx_bit_read(uint8 addr, uint8 mask, uint8 pos)
     uint8 u8Rtn;
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
     
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     ptRFInfo->spi_sel_enable();
 
     ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, (addr & CMD_REG_MASK) | CMD_REG);
@@ -220,7 +220,7 @@ static uint8 trx_bit_read(uint8 addr, uint8 mask, uint8 pos)
     u8Rtn &= mask;
 
     u8Rtn >>= pos;
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
 
     return u8Rtn;
  
@@ -241,7 +241,7 @@ static void trx_bit_write(uint8 addr, uint8 mask, uint8 pos, uint8 u8Value)
     uint8 u8Rtn;
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
 
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     // ÏÈ¶Á¸Ã¼Ä´æÆ÷
     ptRFInfo->spi_sel_enable();
 
@@ -262,7 +262,7 @@ static void trx_bit_write(uint8 addr, uint8 mask, uint8 pos, uint8 u8Value)
 
     ptRFInfo->spi_sel_disable();
     
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
 
 }
 

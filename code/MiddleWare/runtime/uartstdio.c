@@ -91,14 +91,16 @@ static void uart_stdio_isr(void)
    
    if(HWREG32(UART_STDIO_BASE + USART_O_SR) & 0x0020)             //  如果是接受中断
    {
-     c = (unsigned char)(HWREG32(UART_STDIO_BASE + USART_O_DR) & 0x01FF);
-     serial_line_input_byte(c);
+      c = (unsigned char)(HWREG32(UART_STDIO_BASE + USART_O_DR) & 0x01FF);
+      serial_line_input_byte(c);
    }
    
+   //如果接受到了从笔记本电脑发送的 0x4c 代表需要进入Bootloader 下载固件 （重启进入BootLoader）   ？加入此句无法与服务器建立连接 待解决
+   /*
    if(0x4c==c){
      hal_cpu_reset();
    }
-   //如果接受到了从笔记本电脑发送的 0x4c 代表需要进入Bootloader 下载固件 （重启进入BootLoader）
+   */
    if(HWREG32(UART_STDIO_BASE + USART_O_SR) & 0x0008)             //  如果是数据过载了
    {
       c = (unsigned char)(HWREG32(UART_STDIO_BASE + USART_O_DR) & 0x01FF);

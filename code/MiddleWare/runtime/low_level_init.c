@@ -50,7 +50,7 @@ __interwork int __low_level_init(void)
   /**
    * Step1, 初始化系统时钟
   */
-  //修改系统中断向量表起始位置为ROM开始的位置（BootLoader跳转的位置）
+    //修改系统中断向量表起始位置为ROM开始的位置（BootLoader跳转的位置）
   HWREG32(0xE000ED08) = 0x08006000;
   SystemClockInit();
 
