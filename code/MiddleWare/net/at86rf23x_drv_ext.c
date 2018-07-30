@@ -160,14 +160,14 @@ static uint8 trx_reg_read(uint8 addr)
     uint8 u8Rtn;
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
     
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     ptRFInfo->spi_sel_enable();
 
     ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, (addr & CMD_REG_MASK) | CMD_REG);
     u8Rtn = ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, 0xFF);
 
     ptRFInfo->spi_sel_disable();
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
 
     return u8Rtn;
  
@@ -185,14 +185,14 @@ static void trx_reg_write(uint8 addr, uint8 u8Value)
 {
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
     
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     ptRFInfo->spi_sel_enable();
 
     ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, (addr & CMD_REG_MASK) | CMD_REG | CMD_WRITE);
     ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, u8Value);
 
     ptRFInfo->spi_sel_disable();
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
 }
 
 /*********************************************************************************************************
@@ -209,7 +209,7 @@ static uint8 trx_bit_read(uint8 addr, uint8 mask, uint8 pos)
     uint8 u8Rtn;
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
     
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     ptRFInfo->spi_sel_enable();
 
     ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, (addr & CMD_REG_MASK) | CMD_REG);
@@ -220,7 +220,7 @@ static uint8 trx_bit_read(uint8 addr, uint8 mask, uint8 pos)
     u8Rtn &= mask;
 
     u8Rtn >>= pos;
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
 
     return u8Rtn;
  
@@ -241,7 +241,7 @@ static void trx_bit_write(uint8 addr, uint8 mask, uint8 pos, uint8 u8Value)
     uint8 u8Rtn;
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
 
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     // 先读该寄存器
     ptRFInfo->spi_sel_enable();
 
@@ -262,7 +262,7 @@ static void trx_bit_write(uint8 addr, uint8 mask, uint8 pos, uint8 u8Value)
 
     ptRFInfo->spi_sel_disable();
     
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
 
 }
 
@@ -361,7 +361,7 @@ static void trx_frame_write(uint8 length, uint8 *frame)
 {
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
 
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     ptRFInfo->spi_sel_enable();
     // 发送写frame标志
     ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, CMD_FB | CMD_WRITE);
@@ -372,7 +372,7 @@ static void trx_frame_write(uint8 length, uint8 *frame)
         ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, *frame++);
     }
     ptRFInfo->spi_sel_disable();
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
 }
 
 /*********************************************************************************************************
@@ -387,7 +387,7 @@ static uint8 trx_frame_read(uint8 *frame, uint8 *lqi)
     uint8 u8Rtn, i;
     tAt86RFInfo *ptRFInfo = &__GtAt86RF231_Drv;
     
-    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+    //ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     ptRFInfo->spi_sel_enable();
     // 发送读frame标志
     ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, CMD_FB);
@@ -430,7 +430,7 @@ static uint8 trx_frame_read(uint8 *frame, uint8 *lqi)
     *lqi =  ptRFInfo->spi_bus->spi_bus_send_recv_byte(ptRFInfo->spi_bus, 0xFF);
     ptRFInfo->spi_sel_disable();
     
-    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+   // ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
     //　返回值去掉crc的长度
     return (u8Rtn);
 }
@@ -555,6 +555,7 @@ static int init(void)
    BUSYWAIT_UNTIL(0, RTIMER_SECOND *  2 * TIME_SLEEP_TO_TRX_OFF / 1000000);
    RF_RSTN_H();
     /* Force transition to TRX_OFF */
+   ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
    trx_state_set(STATE_FORCE_TRX_OFF);
    BUSYWAIT_UNTIL(0, RTIMER_SECOND * TIME_PLL_ON_TO_TRX_OFF / 1000000);
    
@@ -706,6 +707,7 @@ static int init(void)
    // trx_bit_write(SR_RX_BL_CTRL, 1);
     // 开启动态帧缓冲区保护功能
     trx_bit_write(SR_RX_SAFE_MODE, 1);
+    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
     
     /*
     ** Step 18, 通信信道设置，信道在contiki-net-conf.h中配置，2.4G的只能去11-26的值
@@ -755,7 +757,7 @@ static int transmit(unsigned short transmit_len)
 {   
   uint8 enSendState;
   tAt86RFInfo *ptRFInfo = (tAt86RFInfo *)&__GtAt86RF231_Drv;
-   
+   ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
    
   /* If radio is off (slptr high), turn it on */
   if(ptRFInfo->dev_slp_tr_state()) {
@@ -791,7 +793,8 @@ static int transmit(unsigned short transmit_len)
         rf_reset_state_machine();
      }
      PRINTF("The sent over state is 0x%02X\r\n", trx_state_get());
-  
+     ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
+     
      // 检查发送结果
      if (enSendState == 1) {                //success, data pending from addressee
           enSendState = RADIO_TX_OK;           //handle as ordinary success
@@ -819,6 +822,7 @@ static int send(const void *payload, unsigned short payload_len)
 {
   uint8 enSendState;
   tAt86RFInfo *ptRFInfo = (tAt86RFInfo *)&__GtAt86RF231_Drv;
+  ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
    
    
   /* If radio is off (slptr high), turn it on */
@@ -855,6 +859,7 @@ static int send(const void *payload, unsigned short payload_len)
         rf_reset_state_machine();
      }
      PRINTF("The sent over state is 0x%02X\r\n", trx_state_get());
+     ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
   
      // 检查发送结果
      if (enSendState == 1) {                //success, data pending from addressee
@@ -881,10 +886,12 @@ static int send(const void *payload, unsigned short payload_len)
 *********************************************************************************************************/
 static int read(void *buf, unsigned short bufsize)
 {
-    uint8_t temp;
-    uint8_t lqi;
-
-    temp = trx_bit_read(SR_RX_CRC_VALID);
+  uint8_t temp;
+  uint8_t lqi;
+  tAt86RFInfo *ptRFInfo = (tAt86RFInfo *)&__GtAt86RF231_Drv;
+  ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+  
+  temp = trx_bit_read(SR_RX_CRC_VALID);
     if(!temp) {
         RIMESTATS_ADD(badcrc);
         return 0;
@@ -896,7 +903,7 @@ static int read(void *buf, unsigned short bufsize)
         packetbuf_set_attr(PACKETBUF_ATTR_RSSI, trx_reg_read(RG_PHY_ED_LEVEL));
         packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, lqi);
     }
-    
+    ptRFInfo->spi_bus->spi_bus_unlock(ptRFInfo->spi_bus);
     return temp;
 }
 
@@ -912,7 +919,8 @@ static int channel_clear(void)
   uint8 cca = 0;
   uint8 radio_was_off = 0;
   tAt86RFInfo *ptRFInfo = (tAt86RFInfo *)&__GtAt86RF231_Drv;
-
+  ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
+  
   /* Turn radio on if necessary. If radio is currently busy return busy channel */
   /* This may happen when testing radio duty cycling with RADIOALWAYSON,
    * or because a packet just started. */
@@ -945,10 +953,12 @@ static int channel_clear(void)
     off();
   }
   if (cca & 0x40) {
+    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     return 1;
   }
   
 busyexit:
+  ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
   return 0;
   
 //     trx_bit_write(lowpanif, SR_CCA_REQUEST, 1);
@@ -971,7 +981,9 @@ static int receiving_packet(void)
   if(ptRFInfo->dev_slp_tr_state()) {
     return 0;
   } else {  
+    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     radio_state = trx_state_get();
+    ptRFInfo->spi_bus->spi_bus_lock(ptRFInfo->spi_bus);
     if ((radio_state==STATE_BUSY_RX) || (radio_state==STATE_BUSY_RX_AACK)) {
       return 1;
     }
@@ -1130,6 +1142,8 @@ PROCESS_THREAD(at86rf231_process, ev, data)
 
   PROCESS_END();
 }
+
+
 
 /*********************************************************************************************************
 ** Function name:       ieee_set_pan_addr
