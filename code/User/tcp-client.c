@@ -26,11 +26,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "moteid.h"
 
 /*********************************************************************************************************
 **  定义调试功能，是否打开串口打印功能
 *********************************************************************************************************/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include "runtime/uartstdio.h"
 #define PRINTF(...)   uart_printf(__VA_ARGS__)
@@ -66,16 +67,6 @@ static uint8_t inputbuf[INPUTBUFSIZE];
 #define OUTPUTBUFSIZE    400
 static uint8_t outputbuf[OUTPUTBUFSIZE];
 
-/*********************************************************************************************************
-**  全局变量
-*********************************************************************************************************/
-//uint8_t marknumb = 2;
-//uint8_t * mark = &marknumb;
-
-
-
-
-
 
 /*********************************************************************************************************
 ** Function name:       SetServerAddress
@@ -99,7 +90,6 @@ static int input(struct tcp_socket *s, void *ptr,
   PRINTF("Reveive a packet with %d bytes!\r\n", inputdatalen);
 
   tcp_socket_send(&socket, inputptr, inputdatalen);
-  //tcp_socket_send(&socket, mark, sizeof(marknumb));  
   
   return 0;
 }

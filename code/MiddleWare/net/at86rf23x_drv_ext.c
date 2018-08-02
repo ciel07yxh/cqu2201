@@ -26,6 +26,7 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "contiki-conf.h"
+#include "moteid.h"
 
 #include "services/sys_services.h"
 
@@ -1158,6 +1159,10 @@ void ieee_set_pan_addr(uint16_t pan, uint16_t addr,const uint8_t *ieee_addr)
     trx_reg_write(RG_PAN_ID_1, ((IEEE802154_CONF_PANID >> 8) & 0x00FF));
     trx_reg_write(RG_SHORT_ADDR_0, addr & 0x00ff);
     trx_reg_write(RG_SHORT_ADDR_1, (addr >> 8) & 0x00ff);
+    
+    //trx_reg_write(RG_IEEE_ADDR_0, get_moteid() & 0xff);
+    //trx_reg_write(RG_IEEE_ADDR_1, (get_moteid()>>8) & 0xff);
+    
     trx_reg_write(RG_IEEE_ADDR_0, ieee_addr[7]);
     trx_reg_write(RG_IEEE_ADDR_1, ieee_addr[6]);
     trx_reg_write(RG_IEEE_ADDR_2, ieee_addr[5]);

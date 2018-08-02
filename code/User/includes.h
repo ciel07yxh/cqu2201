@@ -51,6 +51,7 @@ extern "C" {
 #include "infra/rhb_type.h"
 #include "runtime/uartstdio.h"
 #include "services/sys_services.h"
+#include "moteid.h"
 
 /*********************************************************************************************************
    部分设备驱动头文件

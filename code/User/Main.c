@@ -106,6 +106,7 @@ int main (void)
     process_start(&etimer_process, NULL);
     ctimer_init();
     // 初始化网络协议栈
+    moteid_init();
     contiki_net_init();
 
     energest_init();

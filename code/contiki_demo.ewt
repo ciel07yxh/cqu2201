@@ -3180,6 +3180,12 @@
             <name>$PROJ_DIR$\User\Main.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\User\moteid.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\User\moteid.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\User\tcp-client.c</name>
         </file>
         <file>
