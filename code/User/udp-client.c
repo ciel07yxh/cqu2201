@@ -34,6 +34,7 @@
 #include "net/ipv6/uip-ds6.h"
 #include "net/ip/uip-udp-packet.h"
 #include "sys/ctimer.h"
+#include  "moteid.h"
 #ifdef WITH_COMPOWER
 #include "powertrace.h"
 #endif
@@ -45,9 +46,9 @@
 
 #define UDP_EXAMPLE_ID  190
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
-#include "uart_stdio/uartstdio.h"
+#include "runtime/uartstdio.h"
 #define PRINTF(...)   uart_printf(__VA_ARGS__)
 #define PRINT6ADDR(addr) PRINTF(" %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x ", ((u8_t *)addr)[0], ((u8_t *)addr)[1], ((u8_t *)addr)[2], ((u8_t *)addr)[3], ((u8_t *)addr)[4], ((u8_t *)addr)[5], ((u8_t *)addr)[6], ((u8_t *)addr)[7], ((u8_t *)addr)[8], ((u8_t *)addr)[9], ((u8_t *)addr)[10], ((u8_t *)addr)[11], ((u8_t *)addr)[12], ((u8_t *)addr)[13], ((u8_t *)addr)[14], ((u8_t *)addr)[15])
 #define PRINTLLADDR(lladdr) PRINTF(" %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x ",lladdr.u8[0], lladdr.u8[1], lladdr.u8[2], lladdr.u8[3],lladdr.u8[4], lladdr.u8[5], lladdr.u8[6], lladdr.u8[7])
@@ -103,7 +104,7 @@ send_packet(void *ptr)
   seq_id++;
   PRINTF("DATA send to %d 'Hello %d'\n",
          server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
-  sprintf(buf, "Hello %d from the client", seq_id);
+  sprintf(buf, "[INFO] MOTE-%d sending to server %d", get_moteid(),seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 }
@@ -161,7 +162,7 @@ set_global_address(void)
    //uip_ip6addr(&server_ipaddr, 0x2001, 0, 0, 0, 0, 0, 0, 1);
    
      // 发送到IPv4的主机192.168.1.20
-   uip_ip6addr(&server_ipaddr, 0x3ffe, 0, 0, 0, 0, 0, 0xc0a8, 0x0114);
+   uip_ip6addr(&server_ipaddr, 0x3ffe, 0, 0, 0, 0, 0, 0xc0a8, 0x7be1);
 #elif 0
 /* Mode 2 - 16 bits inline */
   uip_ip6addr(&server_ipaddr, 0xaaaa, 0, 0, 0, 0, 0x00ff, 0xfe00, 1);

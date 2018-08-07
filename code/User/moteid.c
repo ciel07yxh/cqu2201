@@ -4,7 +4,9 @@ uint16_t moteid;
 
 void moteid_init(void)
 {
-  stm32f10xx_flash_read(MOTE_ID_FLASH_ADDR,&moteid,2);
+  uint32_t id;
+  stm32f10xx_flash_read(MOTE_ID_FLASH_ADDR,&id,4);
+  moteid = id >> 16;
 }
 
 uint16_t get_moteid(void)

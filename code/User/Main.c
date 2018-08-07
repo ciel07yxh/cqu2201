@@ -39,7 +39,7 @@
 **  外部函数声明
 *********************************************************************************************************/
 PROCESS_NAME(tcp_client_process);
-
+PROCESS_NAME(udp_client_process);
 /*********************************************************************************************************
 **  内部函数声明
 *********************************************************************************************************/
@@ -57,7 +57,7 @@ PROCESS_THREAD(led_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
     sys_led_toggle(0);
     sys_led_toggle(1);
-   // PRINTF("The LED is toggle!\r\n");
+     PRINTF("The mote id  is %d!\r\n",get_moteid());
   }
    PROCESS_END();
 }
@@ -107,6 +107,7 @@ int main (void)
     ctimer_init();
     // 初始化网络协议栈
     moteid_init();
+    PRINTF("The mote id  is %d!\r\n",get_moteid());
     contiki_net_init();
 
     energest_init();
@@ -115,7 +116,7 @@ int main (void)
     autostart_start(autostart_processes);
    // watchdog_init();
    // watchdog_start();
-    process_start(&tcp_client_process, NULL);
+    process_start(&udp_client_process, NULL);
     for(;;)
     {
         do
